@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>大阪・明日香・京都｜秋日紀行</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root{
+  --ink:#20323a;
+  --ink-soft:#4a5c62;
+  --paper:#f2ede1;
+  --paper-raised:#ffffff;
+  --paper-line:#dcd3bf;
+  --gold:#c98a2b;      /* 大阪 Osaka */
+  --moss:#5f6f45;      /* 明日香 Asuka */
+  --vermillion:#b6431c;/* 京都 Kyoto */
+  --gold-light:#e3caa0;
+  --moss-light:#b7beab;
+  --vermillion-light:#deaa99;
+  --font-display:'Noto Serif TC', serif;
+  --font-body:'Noto Sans TC', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:64px;
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  padding:40px 20px 28px;
+  border-bottom:1px solid var(--paper-line);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0)),
+    var(--paper);
+}
+.hero-inner{max-width:720px;margin:0 auto;}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:.14em;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  margin:0 0 10px;
+}
+.title{
+  font-family:var(--font-display);
+  font-weight:900;
+  font-size:clamp(28px,7vw,42px);
+  line-height:1.15;
+  margin:0 0 6px;
+}
+.title .en{
+  display:block;
+  font-family:var(--font-mono);
+  font-weight:400;
+  font-size:14px;
+  letter-spacing:.06em;
+  color:var(--ink-soft);
+  margin-top:6px;
+}
+.dday-row{
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  margin-top:22px;
+  flex-wrap:wrap;
+}
+.dday{
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:34px;
+  background:var(--ink);
+  color:var(--paper);
+  padding:6px 16px;
+  border-radius:3px;
+  letter-spacing:.02em;
+}
+.dday-label{font-size:13px;color:var(--ink-soft);}
+
+/* ---------- SCHEMATIC MAP ---------- */
+.map-wrap{
+  margin:30px 0 4px;
+  border:1px solid var(--paper-line);
+  border-radius:8px;
+  overflow:hidden;
+  background:var(--paper-raised);
+  padding:12px 8px 4px;
+}
+.schema-map{width:100%;height:auto;display:block;}
+.schema-land{fill:var(--paper);stroke:var(--paper-line);stroke-width:1.5;}
+.pref-shape{stroke-width:1.3;}
+.pref-osaka{fill:var(--gold);fill-opacity:.11;stroke:var(--gold);stroke-opacity:.5;}
+.pref-kyoto{fill:var(--vermillion);fill-opacity:.11;stroke:var(--vermillion);stroke-opacity:.5;}
+.pref-nara{fill:var(--moss);fill-opacity:.11;stroke:var(--moss);stroke-opacity:.5;}
+.pref-label{font-family:var(--font-body);font-weight:500;font-size:8px;fill:var(--ink-soft);letter-spacing:.04em;opacity:.85;}
+.neighbor-tick{stroke:var(--paper-line);stroke-width:1.3;}
+.neighbor-arrow{fill:var(--paper-line);}
+.neighbor-label{font-family:var(--font-mono);font-size:8px;fill:var(--ink-soft);opacity:.7;}
+.schema-line{fill:none;stroke-width:2.5;stroke-dasharray:5 5;}
+.schema-line.to-asuka{stroke:var(--moss);}
+.schema-line.to-kyoto{stroke:var(--vermillion);}
+.schema-dot{stroke-width:1;}
+.schema-dot.osaka{fill:var(--gold);stroke:var(--gold-light);}
+.schema-dot.asuka{fill:var(--moss);stroke:var(--moss-light);}
+.schema-dot.kyoto{fill:var(--vermillion);stroke:var(--vermillion-light);}
+.schema-city{font-family:var(--font-body);font-weight:700;font-size:13px;fill:var(--ink);}
+.schema-date{font-family:var(--font-mono);font-size:8px;fill:var(--ink-soft);}
+.scale-label{font-family:var(--font-mono);font-size:4.8px;fill:var(--ink-soft);}
+.schema-city{paint-order:stroke;stroke-width:1px;stroke-linejoin:round;}
+.schema-stop[data-city="osaka"] .schema-city{stroke:var(--paper-raised);}
+.schema-stop[data-city="asuka"] .schema-city{stroke:var(--paper-raised);}
+.schema-stop[data-city="kyoto"] .schema-city{stroke:var(--paper-raised);}
+.schema-stop{cursor:pointer;}
+.schema-hit{fill:transparent;}
+.schema-stop:hover .schema-city,
+.schema-stop:focus-visible .schema-city{text-decoration:underline;}
+.schema-stop:hover .schema-dot,
+.schema-stop:focus-visible .schema-dot{stroke-width:2;}
+.schema-stop:focus-visible{outline:none;}
+.schema-stop:focus-visible .schema-hit{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:3 2;fill:none;}
+.day-card{transition:box-shadow .3s ease, border-color .3s ease;}
+.day-card.flash{border-color:var(--vermillion);box-shadow:0 0 0 3px rgba(182,67,28,.18);}
+
+/* ---------- TABS ---------- */
+.tabbar{
+  position:sticky;top:0;z-index:10;
+  background:var(--paper);
+  border-bottom:1px solid var(--paper-line);
+  display:flex;
+  max-width:720px;margin:0 auto;
+  padding:0 20px;
+}
+.tab{
+  flex:1;
+  padding:14px 4px;
+  text-align:center;
+  font-family:var(--font-body);
+  font-weight:700;
+  font-size:14px;
+  color:var(--ink-soft);
+  cursor:pointer;
+  border-bottom:3px solid transparent;
+  user-select:none;
+}
+.tab .en{display:block;font-family:var(--font-mono);font-weight:400;font-size:9px;letter-spacing:.08em;margin-top:2px;}
+.tab.active{color:var(--ink);border-bottom-color:var(--vermillion);}
+
+.panel{display:none;padding:28px 0 0;}
+.panel.active{display:block;}
+
+/* ---------- ITINERARY ---------- */
+.day-card{
+  background:var(--paper-raised);
+  border:1px solid var(--paper-line);
+  border-radius:6px;
+  margin-bottom:16px;
+  overflow:hidden;
+}
+.day-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  border-left:6px solid var(--city-color);
+}
+.day-date{font-family:var(--font-mono);font-weight:700;font-size:15px;}
+.day-weekday{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
+.day-city{margin-left:auto;font-weight:700;font-size:14px;color:var(--city-color);}
+.day-body{padding:6px 16px 16px;}
+.activity{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:7px 0;
+  border-bottom:1px dashed var(--paper-line);
+  font-size:14px;
+}
+.activity:last-of-type{border-bottom:none;}
+.activity-text{flex:1;line-height:1.5;}
+.activity-del{
+  background:none;border:none;color:var(--ink-soft);
+  cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;
+}
+.add-row{display:flex;gap:8px;margin-top:10px;}
+.add-row input{flex:1;}
+
+/* ---------- FORM ELEMENTS ---------- */
+input[type=text],input[type=number],textarea{
+  font-family:var(--font-body);
+  font-size:14px;
+  padding:9px 11px;
+  border:1px solid var(--paper-line);
+  border-radius:4px;
+  background:var(--paper-raised);
+  color:var(--ink);
+  width:100%;
+}
+input:focus,textarea:focus{outline:2px solid var(--vermillion);outline-offset:1px;}
+button.btn{
+  font-family:var(--font-body);
+  font-weight:700;
+  font-size:14px;
+  padding:9px 16px;
+  border:none;
+  border-radius:4px;
+  background:var(--ink);
+  color:var(--paper);
+  cursor:pointer;
+  white-space:nowrap;
+}
+button.btn:active{opacity:.8;}
+
+/* ---------- EXPENSES ---------- */
+.exp-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px dashed var(--paper-line);
+  font-size:14px;
+}
+.exp-name{flex:1;}
+.exp-amt{font-family:var(--font-mono);font-weight:700;}
+.exp-form{display:flex;gap:8px;margin-bottom:18px;}
+.exp-form input:first-child{flex:2;}
+.exp-form input:last-child{flex:1;}
+.total-box{
+  margin-top:18px;padding:16px;
+  background:var(--ink);color:var(--paper);
+  border-radius:6px;
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.total-box .label{font-size:13px;color:#c9d1ce;}
+.total-box .amt{font-family:var(--font-mono);font-weight:700;font-size:22px;}
+.split-note{font-size:12px;color:var(--ink-soft);margin-top:8px;}
+
+/* ---------- TODO ---------- */
+.todo-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--paper-line);}
+.todo-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--vermillion);flex:0 0 auto;}
+.todo-text{flex:1;font-size:14px;}
+.todo-row.done .todo-text{text-decoration:line-through;color:var(--ink-soft);}
+
+/* ---------- NOTES ---------- */
+textarea.notes{min-height:260px;resize:vertical;line-height:1.6;font-size:14.5px;}
+
+/* section title */
+h2.section-title{
+  font-family:var(--font-display);
+  font-size:19px;margin:0 0 16px;
+}
+
+.empty{color:var(--ink-soft);font-size:13px;padding:6px 0 18px;}
+
+@media (max-width:420px){
+  .schema-city{font-size:11.5px;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">Itinerary · Osaka / Asuka / Kyoto</p>
+    <h1 class="title">大阪・明日香・京都
+      <span class="en">2026.9.20 – 9.25</span>
+    </h1>
+    <div class="dday-row">
+      <span class="dday" id="ddayNum">D-–</span>
+      <span class="dday-label" id="ddayLabel">計算中…</span>
+    </div>
+
+    <div class="map-wrap">
+      <svg class="schema-map" viewBox="0 0 300 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="大阪、明日香、京都地理位置示意圖，含所屬縣市與周邊縣市（依實際經緯度比例繪製）">
+
+        <!-- neighboring prefectures, context only -->
+        <line class="neighbor-tick" x1="14" y1="170" x2="3" y2="170"/>
+        <path class="neighbor-arrow" d="M3,170 L9,166 L9,174 Z"/>
+        <text class="neighbor-label" text-anchor="start" x="17" y="173">兵庫</text>
+
+        <line class="neighbor-tick" x1="245" y1="13" x2="245" y2="3"/>
+        <path class="neighbor-arrow" d="M245,3 L241,9 L249,9 Z"/>
+        <text class="neighbor-label" text-anchor="middle" x="245" y="23">滋賀</text>
+
+        <line class="neighbor-tick" x1="278" y1="212" x2="289" y2="212"/>
+        <path class="neighbor-arrow" d="M289,212 L283,208 L283,216 Z"/>
+        <text class="neighbor-label" text-anchor="end" x="274" y="215">三重</text>
+
+        <line class="neighbor-tick" x1="120" y1="297" x2="120" y2="307"/>
+        <path class="neighbor-arrow" d="M120,307 L116,301 L124,301 Z"/>
+        <text class="neighbor-label" text-anchor="middle" x="120" y="290">和歌山</text>
+
+        <!-- prefectures the trip passes through -->
+        <path class="pref-shape pref-osaka" d="M100,95 L135,90 L162,140 L155,175 L148,210 L140,240 L110,232 L85,225 L65,205 L58,175 L62,140 L80,110 Z"/>
+        <text class="pref-label" text-anchor="middle" x="112" y="220">大阪府</text>
+
+        <path class="pref-shape pref-kyoto" d="M100,95 L135,90 L162,140 L185,150 L215,155 L230,120 L238,80 L232,45 L205,20 L175,15 L150,18 L128,45 L112,70 Z"/>
+        <text class="pref-label" text-anchor="middle" x="190" y="42">京都府</text>
+
+        <path class="pref-shape pref-nara" d="M162,140 L185,150 L215,155 L240,170 L255,200 L258,235 L245,270 L215,295 L180,298 L155,280 L140,245 L148,210 L155,175 Z"/>
+        <text class="pref-label" text-anchor="middle" x="196" y="286">奈良県</text>
+
+        <line class="schema-line to-asuka" x1="110" y1="170" x2="189" y2="238"/>
+        <line class="schema-line to-kyoto" x1="189" y1="238" x2="175" y2="85"/>
+
+        <g class="schema-stop" data-city="osaka" data-date="2026-09-20" tabindex="0" role="button" aria-label="跳到大阪行程">
+          <circle class="schema-hit" cx="110" cy="170" r="18"/>
+          <circle class="schema-dot osaka" cx="110" cy="170" r="7"/>
+          <text class="schema-city" text-anchor="middle" x="110" y="150">大阪 Osaka</text>
+          <text class="schema-date" text-anchor="middle" x="110" y="161">9/20–9/22</text>
+        </g>
+
+        <g class="schema-stop" data-city="asuka" data-date="2026-09-22" tabindex="0" role="button" aria-label="跳到明日香行程">
+          <circle class="schema-hit" cx="189" cy="238" r="18"/>
+          <circle class="schema-dot asuka" cx="189" cy="238" r="7"/>
+          <text class="schema-city" text-anchor="middle" x="189" y="218">明日香 Asuka</text>
+          <text class="schema-date" text-anchor="start" x="207" y="242">9/22–9/23</text>
+        </g>
+
+        <g class="schema-stop" data-city="kyoto" data-date="2026-09-23" tabindex="0" role="button" aria-label="跳到京都行程">
+          <circle class="schema-hit" cx="175" cy="85" r="18"/>
+          <circle class="schema-dot kyoto" cx="175" cy="85" r="7"/>
+          <text class="schema-city" text-anchor="middle" x="175" y="65">京都 Kyoto</text>
+          <text class="schema-date" text-anchor="start" x="188" y="89">9/23–9/25</text>
+        </g>
+
+        <g class="schema-compass" transform="translate(26,26)">
+          <line x1="0" y1="12" x2="0" y2="-10" stroke="var(--ink-soft)" stroke-width="1.5"/>
+          <path d="M0,-14 L4,-6 L-4,-6 Z" fill="var(--ink-soft)"/>
+          <text class="schema-date" text-anchor="middle" x="0" y="24">N</text>
+        </g>
+
+        <g class="schema-scale" transform="translate(30,278)">
+          <line x1="0" y1="0" x2="27" y2="0" stroke="var(--ink-soft)" stroke-width="1.3"/>
+          <line x1="0" y1="-3" x2="0" y2="3" stroke="var(--ink-soft)" stroke-width="1.3"/>
+          <line x1="27" y1="-3" x2="27" y2="3" stroke="var(--ink-soft)" stroke-width="1.3"/>
+          <text class="scale-label" text-anchor="middle" x="13.5" y="11">10 km</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tab active" data-tab="itinerary">行程<span class="en">Itinerary</span></div>
+  <div class="tab" data-tab="expenses">花費<span class="en">Expenses</span></div>
+  <div class="tab" data-tab="todo">待辦<span class="en">To-do</span></div>
+  <div class="tab" data-tab="notes">備忘<span class="en">Notes</span></div>
+</div>
+
+<div class="wrap">
+
+  <div class="panel active" id="panel-itinerary">
+    <h2 class="section-title">行程</h2>
+    <div id="dayList"></div>
+  </div>
+
+  <div class="panel" id="panel-expenses">
+    <h2 class="section-title">花費</h2>
+    <div class="exp-form">
+      <input type="text" id="expName" placeholder="項目，例如：京都住宿">
+      <input type="number" id="expAmt" placeholder="金額 ¥">
+      <button class="btn" id="expAdd">新增</button>
+    </div>
+    <div id="expList"></div>
+    <div class="total-box">
+      <div>
+        <div class="label">總計 Total</div>
+      </div>
+      <div class="amt" id="expTotal">¥0</div>
+    </div>
+    <p class="split-note" id="expSplit"></p>
+  </div>
+
+  <div class="panel" id="panel-todo">
+    <h2 class="section-title">待辦</h2>
+    <div class="add-row">
+      <input type="text" id="todoInput" placeholder="要辦的事，例如：訂近鐵車票">
+      <button class="btn" id="todoAdd">新增</button>
+    </div>
+    <div id="todoList" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="panel" id="panel-notes">
+    <h2 class="section-title">備忘</h2>
+    <textarea class="notes" id="notesArea" placeholder="住宿代碼、集合地點、朋友的航班時間…隨手記下來的都放這裡。"></textarea>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- data model ---------------- */
+const CITY = {
+  osaka:{name:'大阪',color:'var(--gold)'},
+  asuka:{name:'明日香',color:'var(--moss)'},
+  kyoto:{name:'京都',color:'var(--vermillion)'}
+};
+const DAYS_DEF = [
+  {date:'2026-09-20', city:'osaka'},
+  {date:'2026-09-21', city:'osaka'},
+  {date:'2026-09-22', city:'asuka', from:'osaka'},
+  {date:'2026-09-23', city:'kyoto', from:'asuka'},
+  {date:'2026-09-24', city:'kyoto'},
+  {date:'2026-09-25', city:'kyoto'}
+];
+const WD = ['日','一','二','三','四','五','六'];
+const STORE_KEY = 'trip-osaka-asuka-kyoto';
+
+let state = {
+  activities: {},   // {'2026-09-20': ['08:00 從桃園出發', ...]}
+  expenses: [],      // [{name, amt}]
+  todos: [],         // [{text, done}]
+  notes: ''
+};
+
+/* ---------------- storage ---------------- */
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORE_KEY, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      state = Object.assign(state, parsed);
+    }
+  }catch(e){ /* no saved data yet */ }
+}
+async function saveState(){
+  try{
+    await window.storage.set(STORE_KEY, JSON.stringify(state), false);
+  }catch(e){ console.error('save failed', e); }
+}
+
+/* ---------------- hero D-day ---------------- */
+function renderDday(){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const start = new Date('2026-09-20T00:00:00');
+  const end = new Date('2026-09-25T23:59:59');
+  const diff = Math.round((start - today) / 86400000);
+  const numEl = document.getElementById('ddayNum');
+  const labelEl = document.getElementById('ddayLabel');
+  if(today < start){
+    numEl.textContent = 'D-' + diff;
+    labelEl.textContent = '距離出發還有 ' + diff + ' 天';
+  }else if(today >= start && today <= end){
+    numEl.textContent = '旅行中';
+    labelEl.textContent = '好好享受這幾天！';
+  }else{
+    numEl.textContent = '完成';
+    labelEl.textContent = '旅程已結束，回憶都留在備忘裡';
+  }
+}
+
+/* ---------------- map -> itinerary jump ---------------- */
+function goToDay(date){
+  document.querySelector('.tab[data-tab="itinerary"]').click();
+  const target = document.getElementById('day-' + date);
+  if(!target) return;
+  requestAnimationFrame(()=>{
+    target.scrollIntoView({behavior:'smooth', block:'center'});
+    target.classList.add('flash');
+    setTimeout(()=>target.classList.remove('flash'), 1400);
+  });
+}
+document.querySelectorAll('.schema-stop').forEach(stop=>{
+  stop.addEventListener('click', ()=>goToDay(stop.dataset.date));
+  stop.addEventListener('keydown', e=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); goToDay(stop.dataset.date); }
+  });
+});
+
+/* ---------------- itinerary ---------------- */
+function renderDays(){
+  const list = document.getElementById('dayList');
+  list.innerHTML = '';
+  DAYS_DEF.forEach(day => {
+    const d = new Date(day.date + 'T00:00:00');
+    const cityInfo = CITY[day.city];
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    card.id = 'day-' + day.date;
+
+    const cityLabel = day.from
+      ? CITY[day.from].name + ' → ' + cityInfo.name
+      : cityInfo.name;
+
+    card.innerHTML = `
+      <div class="day-head" style="--city-color:${cityInfo.color}">
+        <div>
+          <div class="day-date">${d.getMonth()+1}/${d.getDate()}</div>
+          <div class="day-weekday">週${WD[d.getDay()]}</div>
+        </div>
+        <div class="day-city">${cityLabel}</div>
+      </div>
+      <div class="day-body">
+        <div class="act-list" data-date="${day.date}"></div>
+        <div class="add-row">
+          <input type="text" class="act-input" data-date="${day.date}" placeholder="新增行程，例如：近鐵飛鳥站租腳踏車">
+          <button class="btn act-add" data-date="${day.date}">新增</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  DAYS_DEF.forEach(day => renderActivities(day.date));
+
+  document.querySelectorAll('.act-add').forEach(btn=>{
+    btn.addEventListener('click', ()=>addActivity(btn.dataset.date));
+  });
+  document.querySelectorAll('.act-input').forEach(inp=>{
+    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') addActivity(inp.dataset.date); });
+  });
+}
+
+function renderActivities(date){
+  const el = document.querySelector('.act-list[data-date="'+date+'"]');
+  if(!el) return;
+  const items = state.activities[date] || [];
+  if(items.length===0){
+    el.innerHTML = '<div class="empty">還沒有安排</div>';
+    return;
+  }
+  el.innerHTML = items.map((text, i)=>`
+    <div class="activity">
+      <div class="activity-text">${escapeHtml(text)}</div>
+      <button class="activity-del" data-date="${date}" data-i="${i}">×</button>
+    </div>
+  `).join('');
+  el.querySelectorAll('.activity-del').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.activities[date].splice(parseInt(b.dataset.i),1);
+      renderActivities(date);
+      saveState();
+    });
+  });
+}
+
+function addActivity(date){
+  const input = document.querySelector('.act-input[data-date="'+date+'"]');
+  const val = input.value.trim();
+  if(!val) return;
+  if(!state.activities[date]) state.activities[date] = [];
+  state.activities[date].push(val);
+  input.value = '';
+  renderActivities(date);
+  saveState();
+}
+
+/* ---------------- expenses ---------------- */
+function renderExpenses(){
+  const list = document.getElementById('expList');
+  if(state.expenses.length===0){
+    list.innerHTML = '<div class="empty">還沒有花費紀錄</div>';
+  }else{
+    list.innerHTML = state.expenses.map((e,i)=>`
+      <div class="exp-row">
+        <div class="exp-name">${escapeHtml(e.name)}</div>
+        <div class="exp-amt">¥${e.amt.toLocaleString()}</div>
+        <button class="activity-del" data-i="${i}">×</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('.activity-del').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        state.expenses.splice(parseInt(b.dataset.i),1);
+        renderExpenses();
+        saveState();
+      });
+    });
+  }
+  const total = state.expenses.reduce((s,e)=>s+e.amt,0);
+  document.getElementById('expTotal').textContent = '¥' + total.toLocaleString();
+  document.getElementById('expSplit').textContent = total>0
+    ? '兩人平分每人 ¥' + Math.round(total/2).toLocaleString()
+    : '';
+}
+
+document.getElementById('expAdd').addEventListener('click', ()=>{
+  const nameEl = document.getElementById('expName');
+  const amtEl = document.getElementById('expAmt');
+  const name = nameEl.value.trim();
+  const amt = parseFloat(amtEl.value);
+  if(!name || isNaN(amt)) return;
+  state.expenses.push({name, amt});
+  nameEl.value=''; amtEl.value='';
+  renderExpenses();
+  saveState();
+});
+
+/* ---------------- todo ---------------- */
+function renderTodos(){
+  const list = document.getElementById('todoList');
+  if(state.todos.length===0){
+    list.innerHTML = '<div class="empty">還沒有待辦事項</div>';
+    return;
+  }
+  list.innerHTML = state.todos.map((t,i)=>`
+    <div class="todo-row ${t.done?'done':''}">
+      <input type="checkbox" data-i="${i}" ${t.done?'checked':''}>
+      <div class="todo-text">${escapeHtml(t.text)}</div>
+      <button class="activity-del" data-i="${i}">×</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      state.todos[parseInt(cb.dataset.i)].done = cb.checked;
+      renderTodos();
+      saveState();
+    });
+  });
+  list.querySelectorAll('.activity-del').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.todos.splice(parseInt(b.dataset.i),1);
+      renderTodos();
+      saveState();
+    });
+  });
+}
+document.getElementById('todoAdd').addEventListener('click', addTodo);
+document.getElementById('todoInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addTodo(); });
+function addTodo(){
+  const input = document.getElementById('todoInput');
+  const val = input.value.trim();
+  if(!val) return;
+  state.todos.push({text:val, done:false});
+  input.value='';
+  renderTodos();
+  saveState();
+}
+
+/* ---------------- notes ---------------- */
+const notesArea = document.getElementById('notesArea');
+let notesTimer;
+notesArea.addEventListener('input', ()=>{
+  state.notes = notesArea.value;
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(saveState, 500);
+});
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------------- utils ---------------- */
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ---------------- init ---------------- */
+(async function init(){
+  await loadState();
+  renderDday();
+  renderDays();
+  renderExpenses();
+  renderTodos();
+  notesArea.value = state.notes || '';
+})();
+</script>
+
+</body>
+</html>

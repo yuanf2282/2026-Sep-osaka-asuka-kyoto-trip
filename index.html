@@ -315,6 +315,7 @@ body{
   padding:9px 11px;border:1px solid var(--paper-line);border-radius:4px;
   background:var(--paper-raised);color:var(--ink);width:100%;
 }
+.act-form select.act-currency{flex:0 0 108px;width:auto;}
 .act-time-row{align-items:center;}
 .act-time-row input[type=time]{
   flex:1;font-family:var(--font-mono);font-size:13.5px;
@@ -557,15 +558,9 @@ h2.section-title{
 
   <div class="panel" id="panel-stay">
     <h2 class="section-title">花費</h2>
-    <p class="empty" style="padding:0 0 16px;">自動列出「行程」裡每個有填費用的項目（住宿、景點門票、餐飲等都算），總計會自動加總。要修改或刪除，請到「行程」分頁調整該項目。</p>
+    <p class="empty" style="padding:0 0 16px;">自動列出「行程」裡每個有填費用的項目（住宿、景點門票、餐飲等都算），依幣別分開加總。要修改或刪除，請到「行程」分頁調整該項目。</p>
     <div id="stayList"></div>
-    <div class="total-box">
-      <div>
-        <div class="label">花費總計 Total</div>
-      </div>
-      <div class="amt" id="stayTotal">¥0</div>
-    </div>
-    <p class="split-note" id="staySplit"></p>
+    <div id="stayTotals"></div>
   </div>
 
   <div class="panel" id="panel-todo">
@@ -887,7 +882,11 @@ function renderDays(){
               <option value="住宿">住宿</option>
               <option value="其他">其他</option>
             </select>
-            <input type="number" class="act-cost" data-date="${day.date}" placeholder="費用 ¥">
+            <input type="number" class="act-cost" data-date="${day.date}" placeholder="費用">
+            <select class="act-currency" data-date="${day.date}">
+              <option value="¥">¥ 日圓</option>
+              <option value="NT$">NT$ 台幣</option>
+            </select>
           </div>
           <div class="act-form-row act-time-row">
             <input type="time" class="act-time-start" data-date="${day.date}">
@@ -941,6 +940,7 @@ function clearActForm(date){
   document.querySelector('.act-address[data-date="'+date+'"]').value = '';
   document.querySelector('.act-maplink[data-date="'+date+'"]').value = '';
   document.querySelector('.act-cost[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-currency[data-date="'+date+'"]').value = '¥';
   document.querySelector('.act-notes[data-date="'+date+'"]').value = '';
   document.querySelector('.act-time-start[data-date="'+date+'"]').value = '';
   document.querySelector('.act-time-end[data-date="'+date+'"]').value = '';
@@ -951,8 +951,8 @@ const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':
 
 function normalizeActivity(item){
   // supports legacy plain-string activities from before this feature existed
-  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, notes:'', timeStart:'', timeEnd:''};
-  return Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, notes:'', timeStart:'', timeEnd:''}, item);
+  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:''};
+  return Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:''}, item);
 }
 
 function formatTimeRange(a){
@@ -985,7 +985,7 @@ function renderActivities(date){
       metaHtml += `<a href="${escapeHtml(mapHref)}" target="_blank" rel="noopener">Google 地圖</a>`;
     }
     if(a.cost){
-      metaHtml += `<span class="activity-cost">¥${Number(a.cost).toLocaleString()}</span>`;
+      metaHtml += `<span class="activity-cost">${escapeHtml(a.currency||'¥')}${Number(a.cost).toLocaleString()}</span>`;
     }
     return `
     <div class="activity-card" style="--cat-color:${CAT_COLOR[a.category]||'var(--ink-soft)'}">
@@ -1021,6 +1021,7 @@ function editActivity(date, idx){
   document.querySelector('.act-address[data-date="'+date+'"]').value = item.address;
   document.querySelector('.act-maplink[data-date="'+date+'"]').value = item.mapUrl;
   document.querySelector('.act-cost[data-date="'+date+'"]').value = item.cost || '';
+  document.querySelector('.act-currency[data-date="'+date+'"]').value = item.currency || '¥';
   document.querySelector('.act-notes[data-date="'+date+'"]').value = item.notes;
   document.querySelector('.act-time-start[data-date="'+date+'"]').value = item.timeStart || '';
   document.querySelector('.act-time-end[data-date="'+date+'"]').value = item.timeEnd || '';
@@ -1041,6 +1042,7 @@ function saveActivity(date){
   const addrEl = document.querySelector('.act-address[data-date="'+date+'"]');
   const mapEl = document.querySelector('.act-maplink[data-date="'+date+'"]');
   const costEl = document.querySelector('.act-cost[data-date="'+date+'"]');
+  const currencyEl = document.querySelector('.act-currency[data-date="'+date+'"]');
   const notesEl = document.querySelector('.act-notes[data-date="'+date+'"]');
   const startEl = document.querySelector('.act-time-start[data-date="'+date+'"]');
   const endEl = document.querySelector('.act-time-end[data-date="'+date+'"]');
@@ -1055,6 +1057,7 @@ function saveActivity(date){
     address: addrEl.value.trim(),
     mapUrl: mapEl.value.trim(),
     cost: costEl.value ? parseFloat(costEl.value) : 0,
+    currency: currencyEl.value,
     notes: notesEl.value.trim(),
     timeStart: startEl.value,
     timeEnd: endEl.value
@@ -1091,13 +1094,14 @@ function renderStay(){
   }else{
     list.innerHTML = rows.map(r=>{
       const d = new Date(r.date+'T00:00:00');
+      const cur = r.currency || '¥';
       return `
         <div class="stay-item">
           <div class="stay-top">
             <span class="act-tag ${CAT_CLASS[r.category]||'cat-other'}">${escapeHtml(r.category)}</span>
             <span class="stay-date">${d.getMonth()+1}/${d.getDate()}</span>
             <div class="stay-name">${escapeHtml(r.name)}</div>
-            <span class="stay-amt">¥${Number(r.cost||0).toLocaleString()}</span>
+            <span class="stay-amt">${escapeHtml(cur)}${Number(r.cost||0).toLocaleString()}</span>
           </div>
           ${r.address || r.mapUrl ? `<div class="stay-meta">
             ${r.address ? escapeHtml(r.address) : ''}
@@ -1108,11 +1112,30 @@ function renderStay(){
     }).join('');
   }
 
-  const total = rows.reduce((s,r)=>s+Number(r.cost||0),0);
-  document.getElementById('stayTotal').textContent = '¥' + total.toLocaleString();
-  document.getElementById('staySplit').textContent = total>0
-    ? '兩人平分每人 ¥' + Math.round(total/2).toLocaleString()
-    : '';
+  // totals grouped by currency, since ¥ and NT$ can't be summed together
+  const totalsByCurrency = {};
+  rows.forEach(r=>{
+    const cur = r.currency || '¥';
+    totalsByCurrency[cur] = (totalsByCurrency[cur] || 0) + Number(r.cost || 0);
+  });
+
+  const totalsEl = document.getElementById('stayTotals');
+  const currencies = Object.keys(totalsByCurrency);
+  if(currencies.length === 0){
+    totalsEl.innerHTML = '';
+  }else{
+    totalsEl.innerHTML = currencies.map(cur=>{
+      const total = totalsByCurrency[cur];
+      const label = cur === '¥' ? '日圓總計' : cur === 'NT$' ? '台幣總計' : (cur + ' 總計');
+      return `
+        <div class="total-box">
+          <div><div class="label">${label}</div></div>
+          <div class="amt">${escapeHtml(cur)}${total.toLocaleString()}</div>
+        </div>
+        <p class="split-note">兩人平分每人 ${escapeHtml(cur)}${Math.round(total/2).toLocaleString()}</p>
+      `;
+    }).join('');
+  }
 }
 
 /* ---------------- todo (per-person) ---------------- */

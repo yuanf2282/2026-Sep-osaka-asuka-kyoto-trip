@@ -36,6 +36,63 @@ body{
 }
 .wrap{max-width:720px;margin:0 auto;padding:0 20px;}
 
+/* ---------- IDENTITY ---------- */
+.identity-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(32,50,58,.55);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.identity-overlay.hidden{display:none;}
+.identity-box{
+  background:var(--paper-raised);
+  border-radius:14px;
+  padding:32px 26px;
+  max-width:360px;width:100%;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+  text-align:center;
+}
+.identity-eyebrow{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;
+  color:var(--ink-soft);text-transform:uppercase;margin:0 0 8px;
+}
+.identity-title{
+  font-family:var(--font-display);font-weight:900;font-size:26px;margin:0 0 12px;
+}
+.identity-desc{font-size:13px;color:var(--ink-soft);line-height:1.6;margin:0 0 22px;}
+.identity-choices{display:flex;gap:10px;}
+.identity-btn{
+  flex:1;
+  font-family:var(--font-body);font-weight:700;font-size:15px;
+  padding:14px 10px;border-radius:8px;
+  border:1.5px solid var(--paper-line);
+  background:var(--paper);color:var(--ink);
+  cursor:pointer;
+}
+.identity-btn[data-user="yuan"]:hover{border-color:var(--yuan);color:var(--yuan);}
+.identity-btn[data-user="jiyao"]:hover{border-color:var(--jiyao);color:var(--jiyao);}
+
+.identity-badge{
+  display:flex;align-items:center;gap:10px;
+  margin-top:14px;font-size:12px;color:var(--ink-soft);
+}
+.identity-badge button{
+  font-family:var(--font-body);font-size:11px;
+  background:none;border:1px solid var(--paper-line);border-radius:12px;
+  padding:3px 10px;color:var(--ink-soft);cursor:pointer;
+}
+.identity-badge button:hover{border-color:var(--ink-soft);color:var(--ink);}
+
+/* locked (read-only) who-sections */
+.who-section.locked .who-title::after{
+  content:" · 唯讀";font-weight:400;font-size:11px;color:var(--ink-soft);
+}
+.who-section.locked .add-row{opacity:.4;pointer-events:none;}
+.who-section.locked .todo-row{opacity:.75;}
+.who-section.locked .todo-row input[type=checkbox],
+.who-section.locked .todo-row .activity-del{pointer-events:none;opacity:.5;}
+.who-section.locked textarea.notes-area{background:var(--paper);opacity:.75;cursor:not-allowed;}
+
 /* ---------- HERO ---------- */
 .hero{
   padding:40px 20px 28px;
@@ -229,7 +286,7 @@ body{
 .act-tag.cat-sight{background:var(--gold);}
 .act-tag.cat-stay{background:var(--moss);}
 .act-tag.cat-other{background:var(--ink-soft);}
-.activity-time{font-family:var(--font-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:4px;}
+.activity-time{font-family:var(--font-body);font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:4px;}
 .activity-meta{
   display:flex;flex-direction:column;align-items:flex-start;gap:5px;
   margin-top:8px;
@@ -237,7 +294,7 @@ body{
 }
 .activity-meta a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dashed var(--paper-line);}
 .activity-meta a:hover{color:var(--ink);border-bottom-color:var(--ink-soft);}
-.activity-cost{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink);border-bottom:1px dashed var(--paper-line);}
+.activity-cost{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink);}
 .activity-notes{
   margin-top:8px;padding-top:8px;
   border-top:1px dashed var(--paper-line);
@@ -385,6 +442,18 @@ h2.section-title{
 </head>
 <body>
 
+<div id="identityOverlay" class="identity-overlay">
+  <div class="identity-box">
+    <p class="identity-eyebrow">開始之前</p>
+    <h2 class="identity-title">你是誰？</h2>
+    <p class="identity-desc">選好之後，只有你能新增／編輯／刪除自己的待辦跟備忘，共同的部分兩人都能編輯。之後也可以在頁面上方切換。</p>
+    <div class="identity-choices">
+      <button class="identity-btn" data-user="yuan">Yuan</button>
+      <button class="identity-btn" data-user="jiyao">Jiyao</button>
+    </div>
+  </div>
+</div>
+
 <div class="hero">
   <div class="hero-inner">
     <p class="eyebrow">Itinerary · Osaka / Asuka / Kyoto</p>
@@ -395,6 +464,11 @@ h2.section-title{
       <span class="dday" id="ddayNum">D-–</span>
       <span class="dday-label" id="ddayLabel">計算中…</span>
     </div>
+
+    <p class="identity-badge">
+      <span id="identityLabel">身份：—</span>
+      <button id="identitySwitch" type="button">切換</button>
+    </p>
 
     <div class="map-wrap">
       <svg class="schema-map" viewBox="0 0 300 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="大阪、明日香、京都地理位置示意圖，含所屬縣市與周邊縣市（依實際經緯度比例繪製）">
@@ -680,12 +754,63 @@ function writePath(path, value){
   }
 }
 
+/* ---------------- identity ---------------- */
+const IDENTITY_KEY = 'trip-user-identity';
+let currentUser = null;
+
+function initIdentity(){
+  const saved = localStorage.getItem(IDENTITY_KEY);
+  if(saved === 'yuan' || saved === 'jiyao'){
+    currentUser = saved;
+    document.getElementById('identityOverlay').classList.add('hidden');
+  }else{
+    document.getElementById('identityOverlay').classList.remove('hidden');
+  }
+  updateIdentityBadge();
+}
+
+function chooseIdentity(user){
+  currentUser = user;
+  try{ localStorage.setItem(IDENTITY_KEY, user); }catch(e){}
+  document.getElementById('identityOverlay').classList.add('hidden');
+  updateIdentityBadge();
+  applyPermissions();
+}
+
+function updateIdentityBadge(){
+  const label = document.getElementById('identityLabel');
+  if(label) label.textContent = '身份：' + (currentUser === 'yuan' ? 'Yuan' : currentUser === 'jiyao' ? 'Jiyao' : '未選擇');
+}
+
+function canEdit(who){
+  return who === 'shared' || who === currentUser;
+}
+
+function applyPermissions(){
+  document.querySelectorAll('.who-section').forEach(sec=>{
+    const who = sec.dataset.who;
+    const locked = !canEdit(who);
+    sec.classList.toggle('locked', locked);
+    sec.querySelectorAll('.todo-input, .todo-add').forEach(el=>{ el.disabled = locked; });
+    sec.querySelectorAll('.todo-row input[type=checkbox], .todo-row .activity-del').forEach(el=>{ el.disabled = locked; });
+    sec.querySelectorAll('textarea.notes-area').forEach(el=>{ el.readOnly = locked; });
+  });
+}
+
+document.querySelectorAll('.identity-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>chooseIdentity(btn.dataset.user));
+});
+document.getElementById('identitySwitch').addEventListener('click', ()=>{
+  document.getElementById('identityOverlay').classList.remove('hidden');
+});
+
 function renderAll(){
   renderDday();
   renderDays();
   renderStay();
   renderTodos();
   renderNotes();
+  applyPermissions();
 }
 
 /* ---------------- hero D-day ---------------- */
@@ -1010,6 +1135,7 @@ function renderTodos(){
     `).join('');
     list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
       cb.addEventListener('change', ()=>{
+        if(!canEdit(who)) return;
         state.todos[who][parseInt(cb.dataset.i)].done = cb.checked;
         renderTodos();
         writePath('todos/'+who, state.todos[who]);
@@ -1017,12 +1143,14 @@ function renderTodos(){
     });
     list.querySelectorAll('.activity-del').forEach(b=>{
       b.addEventListener('click', ()=>{
+        if(!canEdit(who)) return;
         state.todos[who].splice(parseInt(b.dataset.i),1);
         renderTodos();
         writePath('todos/'+who, state.todos[who]);
       });
     });
   });
+  applyPermissions();
 }
 
 document.querySelectorAll('.todo-add').forEach(btn=>{
@@ -1032,6 +1160,7 @@ document.querySelectorAll('.todo-input').forEach(inp=>{
   inp.addEventListener('keydown', e=>{ if(e.key==='Enter') addTodo(inp.dataset.who); });
 });
 function addTodo(who){
+  if(!canEdit(who)) return;
   const input = document.querySelector('.todo-input[data-who="'+who+'"]');
   const val = input.value.trim();
   if(!val) return;
@@ -1047,6 +1176,7 @@ let notesTimers = {};
 document.querySelectorAll('.notes-area').forEach(ta=>{
   const who = ta.dataset.who;
   ta.addEventListener('input', ()=>{
+    if(!canEdit(who)){ ta.value = state.notes[who] || ''; return; }
     state.notes[who] = ta.value;
     clearTimeout(notesTimers[who]);
     notesTimers[who] = setTimeout(()=>writePath('notes/'+who, state.notes[who]), 500);
@@ -1080,6 +1210,7 @@ function escapeHtml(str){
 
 /* ---------------- init ---------------- */
 (function init(){
+  initIdentity();
   initSync();
   // if Firebase isn't ready, initSync() already called renderAll() synchronously;
   // if it is ready, the first 'value' snapshot will trigger renderAll().

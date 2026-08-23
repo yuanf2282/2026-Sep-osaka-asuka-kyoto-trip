@@ -174,7 +174,7 @@ body{
   padding:14px 16px;
   border-left:6px solid var(--city-color);
 }
-.day-date{font-family:var(--font-mono);font-weight:700;font-size:15px;}
+.day-date{font-family:var(--font-mono);font-weight:700;font-size:30px;}
 .day-weekday{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
 .day-city{margin-left:auto;font-weight:700;font-size:14px;color:var(--city-color);}
 .day-add-btn{
@@ -217,7 +217,7 @@ body{
 .activity-edit:hover,.activity-del:hover{color:var(--ink);}
 .act-tag{
   flex:0 0 auto;
-  align-self:flex-start;
+  align-self:center;
   margin-top:0;
   font-family:var(--font-body);
   font-size:10px;font-weight:700;
@@ -231,13 +231,13 @@ body{
 .act-tag.cat-other{background:var(--ink-soft);}
 .activity-time{font-family:var(--font-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:4px;}
 .activity-meta{
-  display:flex;flex-direction:column;gap:5px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:5px;
   margin-top:8px;
   font-size:13px;color:var(--ink-soft);
 }
 .activity-meta a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dashed var(--paper-line);}
 .activity-meta a:hover{color:var(--ink);border-bottom-color:var(--ink-soft);}
-.activity-cost{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink);}
+.activity-cost{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink);border-bottom:1px dashed var(--paper-line);}
 .activity-notes{
   margin-top:8px;padding-top:8px;
   border-top:1px dashed var(--paper-line);
@@ -251,6 +251,7 @@ body{
   background:var(--paper);
   border:1px solid var(--paper-line);border-radius:6px;
 }
+.act-form[hidden]{display:none;}
 .act-form-row{display:flex;gap:8px;}
 .act-form select{
   font-family:var(--font-body);font-size:14px;
@@ -336,6 +337,20 @@ textarea.notes-area{min-height:130px;resize:vertical;line-height:1.6;font-size:1
 }
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--moss);}
 .sync-dot.off{background:var(--vermillion);}
+.sync-time{font-family:var(--font-mono);opacity:.75;}
+.sync-time:not(:empty)::before{content:"· ";}
+.sync-toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);
+  padding:9px 18px;border-radius:24px;
+  font-size:13px;font-family:var(--font-body);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+  z-index:100;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(0,0,0,.2);
+}
+.sync-toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+.sync-toast.error{background:var(--vermillion);}
 .total-box{
   margin-top:18px;padding:16px;
   background:var(--ink);color:var(--paper);
@@ -481,7 +496,7 @@ h2.section-title{
 
   <div class="panel" id="panel-todo">
     <h2 class="section-title">待辦</h2>
-    <p class="sync-badge"><span class="sync-dot" id="syncDot"></span><span id="syncText">連線中…</span></p>
+    <p class="sync-badge"><span class="sync-dot" id="syncDot"></span><span id="syncText">連線中…</span><span class="sync-time" id="syncTime"></span></p>
 
     <div class="who-section" data-who="yuan">
       <h3 class="who-title"><span class="who-dot"></span>Yuan</h3>
@@ -513,7 +528,7 @@ h2.section-title{
 
   <div class="panel" id="panel-notes">
     <h2 class="section-title">備忘</h2>
-    <p class="sync-badge"><span class="sync-dot" id="syncDot2"></span><span id="syncText2">連線中…</span></p>
+    <p class="sync-badge"><span class="sync-dot" id="syncDot2"></span><span id="syncText2">連線中…</span><span class="sync-time" id="syncTime2"></span></p>
 
     <div class="who-section" data-who="yuan">
       <h3 class="who-title"><span class="who-dot"></span>Yuan</h3>
@@ -602,6 +617,28 @@ function setSyncBadge(on){
   });
 }
 
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function updateSyncTime(){
+  const now = new Date();
+  const txt = '最後同步 ' + pad2(now.getHours()) + ':' + pad2(now.getMinutes()) + ':' + pad2(now.getSeconds());
+  ['syncTime','syncTime2'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = txt;
+  });
+}
+
+let toastTimer = null;
+function showToast(msg, isError){
+  const el = document.getElementById('syncToast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.toggle('error', !!isError);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 1800);
+}
+
 function initSync(){
   if(fbReady){
     fbDb.ref(TRIP_PATH).on('value', snap=>{
@@ -610,6 +647,10 @@ function initSync(){
       state.todos = val.todos || {yuan:[],jiyao:[],shared:[]};
       state.notes = val.notes || {yuan:'',jiyao:'',shared:''};
       renderAll();
+      updateSyncTime();
+    }, err=>{
+      setSyncBadge(false);
+      showToast('連線中斷，請檢查網路', true);
     });
     setSyncBadge(true);
   }else{
@@ -630,9 +671,12 @@ function persistLocal(){
 // write a specific sub-path (falls back to whole-state local save)
 function writePath(path, value){
   if(fbReady){
-    fbDb.ref(TRIP_PATH + '/' + path).set(value);
+    fbDb.ref(TRIP_PATH + '/' + path).set(value)
+      .then(()=>{ showToast('已同步 ✓'); updateSyncTime(); })
+      .catch(()=>{ showToast('同步失敗，請檢查網路', true); });
   }else{
     persistLocal();
+    showToast('已存在本機（尚未連線 Firebase）');
   }
 }
 
@@ -1041,6 +1085,8 @@ function escapeHtml(str){
   // if it is ready, the first 'value' snapshot will trigger renderAll().
 })();
 </script>
+
+<div id="syncToast" class="sync-toast"></div>
 
 </body>
 </html>

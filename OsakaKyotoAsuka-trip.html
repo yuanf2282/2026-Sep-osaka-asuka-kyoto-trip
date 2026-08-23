@@ -19,6 +19,8 @@
   --gold-light:#e3caa0;
   --moss-light:#b7beab;
   --vermillion-light:#deaa99;
+  --yuan:#3d6b78;
+  --jiyao:#8a5a7a;
   --font-display:'Noto Serif TC', serif;
   --font-body:'Noto Sans TC', sans-serif;
   --font-mono:'JetBrains Mono', monospace;
@@ -159,7 +161,7 @@ body{
 
 /* ---------- ITINERARY ---------- */
 .day-card{
-  background:var(--paper-raised);
+  background:var(--paper);
   border:1px solid var(--paper-line);
   border-radius:6px;
   margin-bottom:16px;
@@ -175,20 +177,96 @@ body{
 .day-date{font-family:var(--font-mono);font-weight:700;font-size:15px;}
 .day-weekday{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
 .day-city{margin-left:auto;font-weight:700;font-size:14px;color:var(--city-color);}
-.day-body{padding:6px 16px 16px;}
-.activity{
-  display:flex;align-items:flex-start;gap:8px;
-  padding:7px 0;
-  border-bottom:1px dashed var(--paper-line);
-  font-size:14px;
+.day-add-btn{
+  flex:0 0 auto;
+  width:26px;height:26px;
+  border-radius:50%;
+  border:1.5px solid var(--city-color);
+  background:var(--paper-raised);
+  color:var(--city-color);
+  font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+  font-family:var(--font-body);
+  transition:transform .2s ease, background .2s ease, color .2s ease;
 }
-.activity:last-of-type{border-bottom:none;}
-.activity-text{flex:1;line-height:1.5;}
-.activity-del{
+.day-add-btn:hover{background:var(--city-color);color:var(--paper-raised);}
+.day-add-btn.active{background:var(--city-color);color:var(--paper-raised);transform:rotate(45deg);}
+.day-body{padding:6px 16px 18px;}
+
+.activity-card{
+  padding:12px 14px;
+  margin-bottom:10px;
+  background:var(--paper-raised);
+  border:1px solid var(--paper-line);
+  border-left:4px solid var(--cat-color, var(--ink-soft));
+  border-radius:10px;
+}
+.activity-card:last-child{margin-bottom:0;}
+.activity-top{display:flex;gap:8px;}
+.activity-name{flex:1;font-weight:700;font-size:18px;line-height:1.15;align-self:flex-start;margin:0;}
+.activity-del,.activity-edit{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;
   background:none;border:none;color:var(--ink-soft);
-  cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;
+  cursor:pointer;line-height:1;padding:0;flex:0 0 auto;
+  align-self:flex-end;
 }
-.add-row{display:flex;gap:8px;margin-top:10px;}
+.activity-del{font-size:20px;margin-left:6px;}
+.activity-edit{font-size:17px;margin-left:4px;}
+.activity-edit:hover,.activity-del:hover{color:var(--ink);}
+.act-tag{
+  flex:0 0 auto;
+  align-self:flex-start;
+  margin-top:0;
+  font-family:var(--font-body);
+  font-size:10px;font-weight:700;
+  line-height:1;
+  padding:3px 8px;border-radius:20px;
+  color:#fff;white-space:nowrap;
+}
+.act-tag.cat-eat{background:var(--vermillion);}
+.act-tag.cat-sight{background:var(--gold);}
+.act-tag.cat-stay{background:var(--moss);}
+.act-tag.cat-other{background:var(--ink-soft);}
+.activity-time{font-family:var(--font-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:4px;}
+.activity-meta{
+  display:flex;flex-direction:column;gap:5px;
+  margin-top:8px;
+  font-size:13px;color:var(--ink-soft);
+}
+.activity-meta a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dashed var(--paper-line);}
+.activity-meta a:hover{color:var(--ink);border-bottom-color:var(--ink-soft);}
+.activity-cost{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink);}
+.activity-notes{
+  margin-top:8px;padding-top:8px;
+  border-top:1px dashed var(--paper-line);
+  font-size:13px;color:var(--ink-soft);line-height:1.6;
+  white-space:pre-wrap;word-break:break-word;
+}
+
+.act-form{
+  display:flex;flex-direction:column;gap:8px;
+  margin-top:10px;padding:12px;
+  background:var(--paper);
+  border:1px solid var(--paper-line);border-radius:6px;
+}
+.act-form-row{display:flex;gap:8px;}
+.act-form select{
+  font-family:var(--font-body);font-size:14px;
+  padding:9px 11px;border:1px solid var(--paper-line);border-radius:4px;
+  background:var(--paper-raised);color:var(--ink);width:100%;
+}
+.act-time-row{align-items:center;}
+.act-time-row input[type=time]{
+  flex:1;font-family:var(--font-mono);font-size:13.5px;
+  padding:8px 9px;border:1px solid var(--paper-line);border-radius:4px;
+  background:var(--paper-raised);color:var(--ink);
+}
+.act-time-sep{color:var(--ink-soft);font-family:var(--font-mono);flex:0 0 auto;}
+.act-form textarea{min-height:56px;resize:vertical;font-size:13.5px;}
+
+.add-row{display:flex;gap:8px;}
 .add-row input{flex:1;}
 
 /* ---------- FORM ELEMENTS ---------- */
@@ -225,9 +303,39 @@ button.btn:active{opacity:.8;}
 }
 .exp-name{flex:1;}
 .exp-amt{font-family:var(--font-mono);font-weight:700;}
-.exp-form{display:flex;gap:8px;margin-bottom:18px;}
-.exp-form input:first-child{flex:2;}
-.exp-form input:last-child{flex:1;}
+.stay-item{
+  padding:12px 0;
+  border-bottom:1px dashed var(--paper-line);
+}
+.stay-item:last-of-type{border-bottom:none;}
+.stay-top{display:flex;align-items:center;gap:8px;}
+.stay-date{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);flex:0 0 auto;}
+.stay-name{flex:1;font-weight:700;font-size:14px;}
+.stay-amt{font-family:var(--font-mono);font-weight:700;color:var(--ink);flex:0 0 auto;}
+.stay-meta{margin-top:4px;font-size:12.5px;color:var(--ink-soft);}
+.stay-meta a{color:var(--ink-soft);}
+
+/* ---------- SHARED / PER-PERSON SECTIONS ---------- */
+.who-section{margin-bottom:26px;}
+.who-title{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--font-body);font-weight:700;font-size:14px;
+  margin:0 0 10px;color:var(--ink);
+}
+.who-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.who-section[data-who="yuan"] .who-dot{background:var(--yuan);}
+.who-section[data-who="jiyao"] .who-dot{background:var(--jiyao);}
+.who-section[data-who="shared"] .who-dot{background:var(--ink-soft);}
+.who-section[data-who="yuan"] .add-row input:focus{outline-color:var(--yuan);}
+.who-section[data-who="jiyao"] .add-row input:focus{outline-color:var(--jiyao);}
+textarea.notes-area{min-height:130px;resize:vertical;line-height:1.6;font-size:14.5px;}
+.sync-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--ink-soft);
+  margin-bottom:18px;
+}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--moss);}
+.sync-dot.off{background:var(--vermillion);}
 .total-box{
   margin-top:18px;padding:16px;
   background:var(--ink);color:var(--paper);
@@ -346,7 +454,7 @@ h2.section-title{
 
 <div class="tabbar">
   <div class="tab active" data-tab="itinerary">行程<span class="en">Itinerary</span></div>
-  <div class="tab" data-tab="expenses">花費<span class="en">Expenses</span></div>
+  <div class="tab" data-tab="stay">花費<span class="en">Expenses</span></div>
   <div class="tab" data-tab="todo">待辦<span class="en">To-do</span></div>
   <div class="tab" data-tab="notes">備忘<span class="en">Notes</span></div>
 </div>
@@ -358,40 +466,102 @@ h2.section-title{
     <div id="dayList"></div>
   </div>
 
-  <div class="panel" id="panel-expenses">
+  <div class="panel" id="panel-stay">
     <h2 class="section-title">花費</h2>
-    <div class="exp-form">
-      <input type="text" id="expName" placeholder="項目，例如：京都住宿">
-      <input type="number" id="expAmt" placeholder="金額 ¥">
-      <button class="btn" id="expAdd">新增</button>
-    </div>
-    <div id="expList"></div>
+    <p class="empty" style="padding:0 0 16px;">自動列出「行程」裡每個有填費用的項目（住宿、景點門票、餐飲等都算），總計會自動加總。要修改或刪除，請到「行程」分頁調整該項目。</p>
+    <div id="stayList"></div>
     <div class="total-box">
       <div>
-        <div class="label">總計 Total</div>
+        <div class="label">花費總計 Total</div>
       </div>
-      <div class="amt" id="expTotal">¥0</div>
+      <div class="amt" id="stayTotal">¥0</div>
     </div>
-    <p class="split-note" id="expSplit"></p>
+    <p class="split-note" id="staySplit"></p>
   </div>
 
   <div class="panel" id="panel-todo">
     <h2 class="section-title">待辦</h2>
-    <div class="add-row">
-      <input type="text" id="todoInput" placeholder="要辦的事，例如：訂近鐵車票">
-      <button class="btn" id="todoAdd">新增</button>
+    <p class="sync-badge"><span class="sync-dot" id="syncDot"></span><span id="syncText">連線中…</span></p>
+
+    <div class="who-section" data-who="yuan">
+      <h3 class="who-title"><span class="who-dot"></span>Yuan</h3>
+      <div class="add-row">
+        <input type="text" class="todo-input" data-who="yuan" placeholder="Yuan 的待辦">
+        <button class="btn todo-add" data-who="yuan">新增</button>
+      </div>
+      <div class="todo-list" data-who="yuan" style="margin-top:12px;"></div>
     </div>
-    <div id="todoList" style="margin-top:14px;"></div>
+
+    <div class="who-section" data-who="jiyao">
+      <h3 class="who-title"><span class="who-dot"></span>Jiyao</h3>
+      <div class="add-row">
+        <input type="text" class="todo-input" data-who="jiyao" placeholder="Jiyao 的待辦">
+        <button class="btn todo-add" data-who="jiyao">新增</button>
+      </div>
+      <div class="todo-list" data-who="jiyao" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="who-section" data-who="shared">
+      <h3 class="who-title"><span class="who-dot"></span>共同</h3>
+      <div class="add-row">
+        <input type="text" class="todo-input" data-who="shared" placeholder="兩人共同的待辦">
+        <button class="btn todo-add" data-who="shared">新增</button>
+      </div>
+      <div class="todo-list" data-who="shared" style="margin-top:12px;"></div>
+    </div>
   </div>
 
   <div class="panel" id="panel-notes">
     <h2 class="section-title">備忘</h2>
-    <textarea class="notes" id="notesArea" placeholder="住宿代碼、集合地點、朋友的航班時間…隨手記下來的都放這裡。"></textarea>
+    <p class="sync-badge"><span class="sync-dot" id="syncDot2"></span><span id="syncText2">連線中…</span></p>
+
+    <div class="who-section" data-who="yuan">
+      <h3 class="who-title"><span class="who-dot"></span>Yuan</h3>
+      <textarea class="notes-area" data-who="yuan" placeholder="Yuan 自己的備忘…"></textarea>
+    </div>
+
+    <div class="who-section" data-who="jiyao">
+      <h3 class="who-title"><span class="who-dot"></span>Jiyao</h3>
+      <textarea class="notes-area" data-who="jiyao" placeholder="Jiyao 自己的備忘…"></textarea>
+    </div>
+
+    <div class="who-section" data-who="shared">
+      <h3 class="who-title"><span class="who-dot"></span>共同</h3>
+      <textarea class="notes-area" data-who="shared" placeholder="住宿代碼、集合地點、航班時間…兩人都要看的放這裡。"></textarea>
+    </div>
   </div>
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script>
+/* =====================================================================
+   將下面換成你自己 Firebase 專案的設定值（Firebase Console → 專案設定 →
+   一般 → 你的應用程式 → SDK 設定和配置）。在填好之前，這個網頁會用
+   瀏覽器暫存資料，兩人之間不會同步；填好之後重新整理就會自動接上。
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBV6isklX6DEgi5H3yaMTLCC6xGCxQ0j_k",
+  authDomain: "tripwithjiyao.firebaseapp.com",
+  databaseURL: "https://tripwithjiyao-default-rtdb.firebaseio.com",
+  projectId: "tripwithjiyao",
+  storageBucket: "tripwithjiyao.firebasestorage.app",
+  messagingSenderId: "65226968761",
+  appId: "1:65226968761:web:5db04a32e21b91b0251568"
+};
+
+let fbDb = null;
+let fbReady = false;
+try{
+  if(firebaseConfig.apiKey !== 'YOUR_API_KEY' && firebaseConfig.databaseURL.indexOf('PASTE_') !== 0 && typeof firebase !== 'undefined'){
+    firebase.initializeApp(firebaseConfig);
+    fbDb = firebase.database();
+    fbReady = true;
+  }
+}catch(e){ console.warn('Firebase 尚未設定或初始化失敗', e); }
+
+const TRIP_PATH = 'trips/osaka-asuka-kyoto';
 /* ---------------- data model ---------------- */
 const CITY = {
   osaka:{name:'大阪',color:'var(--gold)'},
@@ -407,29 +577,71 @@ const DAYS_DEF = [
   {date:'2026-09-25', city:'kyoto'}
 ];
 const WD = ['日','一','二','三','四','五','六'];
-const STORE_KEY = 'trip-osaka-asuka-kyoto';
+const LOCAL_KEY_LEGACY = 'trip-osaka-asuka-kyoto'; // kept for reference, see LOCAL_KEY above
 
 let state = {
-  activities: {},   // {'2026-09-20': ['08:00 從桃園出發', ...]}
-  expenses: [],      // [{name, amt}]
-  todos: [],         // [{text, done}]
-  notes: ''
+  activities: {},   // {'2026-09-20': [{name,category,cost,timeStart,...}, ...]}
+  todos: { yuan:[], jiyao:[], shared:[] },
+  notes: { yuan:'', jiyao:'', shared:'' }
 };
 
-/* ---------------- storage ---------------- */
-async function loadState(){
-  try{
-    const res = await window.storage.get(STORE_KEY, false);
-    if(res && res.value){
-      const parsed = JSON.parse(res.value);
-      state = Object.assign(state, parsed);
-    }
-  }catch(e){ /* no saved data yet */ }
+/* ---------------- storage / sync ----------------
+   有設定 Firebase 時：即時雙向同步，任何一方修改，另一方畫面會自動更新。
+   沒設定 Firebase 時：退回瀏覽器本機暫存（僅供預覽，兩人不會同步）。
+------------------------------------------------------ */
+const LOCAL_KEY = 'trip-osaka-asuka-kyoto';
+
+function setSyncBadge(on){
+  ['syncDot','syncDot2'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('off', !on);
+  });
+  ['syncText','syncText2'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = on ? '已連線，雙方即時同步' : '尚未連線 Firebase，僅本機暫存';
+  });
 }
-async function saveState(){
-  try{
-    await window.storage.set(STORE_KEY, JSON.stringify(state), false);
-  }catch(e){ console.error('save failed', e); }
+
+function initSync(){
+  if(fbReady){
+    fbDb.ref(TRIP_PATH).on('value', snap=>{
+      const val = snap.val() || {};
+      state.activities = val.activities || {};
+      state.todos = val.todos || {yuan:[],jiyao:[],shared:[]};
+      state.notes = val.notes || {yuan:'',jiyao:'',shared:''};
+      renderAll();
+    });
+    setSyncBadge(true);
+  }else{
+    try{
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if(raw) state = Object.assign(state, JSON.parse(raw));
+    }catch(e){}
+    setSyncBadge(false);
+    renderAll();
+  }
+}
+
+function persistLocal(){
+  if(fbReady) return;
+  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+// write a specific sub-path (falls back to whole-state local save)
+function writePath(path, value){
+  if(fbReady){
+    fbDb.ref(TRIP_PATH + '/' + path).set(value);
+  }else{
+    persistLocal();
+  }
+}
+
+function renderAll(){
+  renderDday();
+  renderDays();
+  renderStay();
+  renderTodos();
+  renderNotes();
 }
 
 /* ---------------- hero D-day ---------------- */
@@ -493,12 +705,30 @@ function renderDays(){
           <div class="day-weekday">週${WD[d.getDay()]}</div>
         </div>
         <div class="day-city">${cityLabel}</div>
+        <button class="day-add-btn" data-date="${day.date}" aria-label="新增行程" title="新增行程">+</button>
       </div>
       <div class="day-body">
         <div class="act-list" data-date="${day.date}"></div>
-        <div class="add-row">
-          <input type="text" class="act-input" data-date="${day.date}" placeholder="新增行程，例如：近鐵飛鳥站租腳踏車">
-          <button class="btn act-add" data-date="${day.date}">新增</button>
+        <div class="act-form" data-date="${day.date}" hidden>
+          <input type="text" class="act-name" data-date="${day.date}" placeholder="行程名稱">
+          <div class="act-form-row">
+            <select class="act-category" data-date="${day.date}">
+              <option value="吃喝">吃喝</option>
+              <option value="景點">景點</option>
+              <option value="住宿">住宿</option>
+              <option value="其他">其他</option>
+            </select>
+            <input type="number" class="act-cost" data-date="${day.date}" placeholder="費用 ¥">
+          </div>
+          <div class="act-form-row act-time-row">
+            <input type="time" class="act-time-start" data-date="${day.date}">
+            <span class="act-time-sep">~</span>
+            <input type="time" class="act-time-end" data-date="${day.date}">
+          </div>
+          <input type="text" class="act-address" data-date="${day.date}" placeholder="地址">
+          <input type="url" class="act-maplink" data-date="${day.date}" placeholder="Google Maps 連結">
+          <textarea class="act-notes" data-date="${day.date}" placeholder="行程備註"></textarea>
+          <button class="btn act-submit" data-date="${day.date}">新增這個行程</button>
         </div>
       </div>
     `;
@@ -507,137 +737,285 @@ function renderDays(){
 
   DAYS_DEF.forEach(day => renderActivities(day.date));
 
-  document.querySelectorAll('.act-add').forEach(btn=>{
-    btn.addEventListener('click', ()=>addActivity(btn.dataset.date));
+  document.querySelectorAll('.day-add-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const form = document.querySelector('.act-form[data-date="'+btn.dataset.date+'"]');
+      const opening = form.hasAttribute('hidden');
+      if(opening){
+        form.removeAttribute('hidden');
+        btn.classList.add('active');
+        form.scrollIntoView({behavior:'smooth', block:'center'});
+      }else{
+        closeActForm(btn.dataset.date);
+      }
+    });
   });
-  document.querySelectorAll('.act-input').forEach(inp=>{
-    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') addActivity(inp.dataset.date); });
+  document.querySelectorAll('.act-submit').forEach(btn=>{
+    btn.addEventListener('click', ()=>saveActivity(btn.dataset.date));
   });
+}
+
+function closeActForm(date){
+  const form = document.querySelector('.act-form[data-date="'+date+'"]');
+  const addBtn = document.querySelector('.day-add-btn[data-date="'+date+'"]');
+  const submitBtn = document.querySelector('.act-submit[data-date="'+date+'"]');
+  form.setAttribute('hidden','');
+  delete form.dataset.editIndex;
+  addBtn.classList.remove('active');
+  submitBtn.textContent = '新增這個行程';
+  clearActForm(date);
+}
+
+function clearActForm(date){
+  document.querySelector('.act-name[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-category[data-date="'+date+'"]').value = '吃喝';
+  document.querySelector('.act-address[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-maplink[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-cost[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-notes[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-time-start[data-date="'+date+'"]').value = '';
+  document.querySelector('.act-time-end[data-date="'+date+'"]').value = '';
+}
+
+const CAT_CLASS = {'吃喝':'cat-eat','景點':'cat-sight','觀光':'cat-sight','住宿':'cat-stay','其他':'cat-other'};
+const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':'var(--gold)','住宿':'var(--moss)','其他':'var(--ink-soft)'};
+
+function normalizeActivity(item){
+  // supports legacy plain-string activities from before this feature existed
+  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, notes:'', timeStart:'', timeEnd:''};
+  return Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, notes:'', timeStart:'', timeEnd:''}, item);
+}
+
+function formatTimeRange(a){
+  if(!a.timeStart) return '';
+  return a.timeEnd ? (a.timeStart + '~' + a.timeEnd) : (a.timeStart + '~');
+}
+
+// Google Maps link priority: 1) editor-provided link  2) search by name  3) search by address
+function activityMapHref(a){
+  if(a.mapUrl) return a.mapUrl;
+  if(a.name) return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a.name);
+  if(a.address) return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a.address);
+  return '';
 }
 
 function renderActivities(date){
   const el = document.querySelector('.act-list[data-date="'+date+'"]');
   if(!el) return;
-  const items = state.activities[date] || [];
+  const items = (state.activities[date] || []).map(normalizeActivity);
   if(items.length===0){
     el.innerHTML = '<div class="empty">還沒有安排</div>';
     return;
   }
-  el.innerHTML = items.map((text, i)=>`
-    <div class="activity">
-      <div class="activity-text">${escapeHtml(text)}</div>
-      <button class="activity-del" data-date="${date}" data-i="${i}">×</button>
+  el.innerHTML = items.map((a, i)=>{
+    const mapHref = activityMapHref(a);
+    let metaHtml = '';
+    if(a.address){
+      metaHtml += `<a href="${escapeHtml(mapHref)}" target="_blank" rel="noopener">${escapeHtml(a.address)}</a>`;
+    }else if(mapHref){
+      metaHtml += `<a href="${escapeHtml(mapHref)}" target="_blank" rel="noopener">Google 地圖</a>`;
+    }
+    if(a.cost){
+      metaHtml += `<span class="activity-cost">¥${Number(a.cost).toLocaleString()}</span>`;
+    }
+    return `
+    <div class="activity-card" style="--cat-color:${CAT_COLOR[a.category]||'var(--ink-soft)'}">
+      <div class="activity-top">
+        <span class="act-tag ${CAT_CLASS[a.category]||'cat-other'}">${escapeHtml(a.category)}</span>
+        <div class="activity-name">${escapeHtml(a.name)}</div>
+        <button class="activity-edit" data-date="${date}" data-i="${i}" aria-label="編輯">✎</button>
+        <button class="activity-del" data-date="${date}" data-i="${i}" aria-label="刪除">×</button>
+      </div>
+      ${formatTimeRange(a) ? `<div class="activity-time">${formatTimeRange(a)}</div>` : ''}
+      ${metaHtml ? `<div class="activity-meta">${metaHtml}</div>` : ''}
+      ${a.notes ? `<div class="activity-notes">${escapeHtml(a.notes)}</div>` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
   el.querySelectorAll('.activity-del').forEach(b=>{
     b.addEventListener('click', ()=>{
       state.activities[date].splice(parseInt(b.dataset.i),1);
       renderActivities(date);
-      saveState();
+      renderStay();
+      writePath('activities/'+date, state.activities[date]);
     });
+  });
+  el.querySelectorAll('.activity-edit').forEach(b=>{
+    b.addEventListener('click', ()=>editActivity(date, parseInt(b.dataset.i)));
   });
 }
 
-function addActivity(date){
-  const input = document.querySelector('.act-input[data-date="'+date+'"]');
-  const val = input.value.trim();
-  if(!val) return;
-  if(!state.activities[date]) state.activities[date] = [];
-  state.activities[date].push(val);
-  input.value = '';
-  renderActivities(date);
-  saveState();
+function editActivity(date, idx){
+  const item = normalizeActivity(state.activities[date][idx]);
+  document.querySelector('.act-name[data-date="'+date+'"]').value = item.name;
+  document.querySelector('.act-category[data-date="'+date+'"]').value = item.category;
+  document.querySelector('.act-address[data-date="'+date+'"]').value = item.address;
+  document.querySelector('.act-maplink[data-date="'+date+'"]').value = item.mapUrl;
+  document.querySelector('.act-cost[data-date="'+date+'"]').value = item.cost || '';
+  document.querySelector('.act-notes[data-date="'+date+'"]').value = item.notes;
+  document.querySelector('.act-time-start[data-date="'+date+'"]').value = item.timeStart || '';
+  document.querySelector('.act-time-end[data-date="'+date+'"]').value = item.timeEnd || '';
+
+  const form = document.querySelector('.act-form[data-date="'+date+'"]');
+  const addBtn = document.querySelector('.day-add-btn[data-date="'+date+'"]');
+  const submitBtn = document.querySelector('.act-submit[data-date="'+date+'"]');
+  form.dataset.editIndex = idx;
+  form.removeAttribute('hidden');
+  addBtn.classList.add('active');
+  submitBtn.textContent = '更新這個行程';
+  form.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-/* ---------------- expenses ---------------- */
-function renderExpenses(){
-  const list = document.getElementById('expList');
-  if(state.expenses.length===0){
-    list.innerHTML = '<div class="empty">還沒有花費紀錄</div>';
+function saveActivity(date){
+  const nameEl = document.querySelector('.act-name[data-date="'+date+'"]');
+  const catEl = document.querySelector('.act-category[data-date="'+date+'"]');
+  const addrEl = document.querySelector('.act-address[data-date="'+date+'"]');
+  const mapEl = document.querySelector('.act-maplink[data-date="'+date+'"]');
+  const costEl = document.querySelector('.act-cost[data-date="'+date+'"]');
+  const notesEl = document.querySelector('.act-notes[data-date="'+date+'"]');
+  const startEl = document.querySelector('.act-time-start[data-date="'+date+'"]');
+  const endEl = document.querySelector('.act-time-end[data-date="'+date+'"]');
+  const form = document.querySelector('.act-form[data-date="'+date+'"]');
+
+  const name = nameEl.value.trim();
+  if(!name){ nameEl.focus(); return; }
+
+  const entry = {
+    name,
+    category: catEl.value,
+    address: addrEl.value.trim(),
+    mapUrl: mapEl.value.trim(),
+    cost: costEl.value ? parseFloat(costEl.value) : 0,
+    notes: notesEl.value.trim(),
+    timeStart: startEl.value,
+    timeEnd: endEl.value
+  };
+
+  if(!state.activities[date]) state.activities[date] = [];
+
+  const editIdx = form.dataset.editIndex;
+  if(editIdx !== undefined && editIdx !== ''){
+    state.activities[date][parseInt(editIdx)] = entry;
   }else{
-    list.innerHTML = state.expenses.map((e,i)=>`
-      <div class="exp-row">
-        <div class="exp-name">${escapeHtml(e.name)}</div>
-        <div class="exp-amt">¥${e.amt.toLocaleString()}</div>
-        <button class="activity-del" data-i="${i}">×</button>
-      </div>
-    `).join('');
-    list.querySelectorAll('.activity-del').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        state.expenses.splice(parseInt(b.dataset.i),1);
-        renderExpenses();
-        saveState();
-      });
-    });
+    state.activities[date].push(entry);
   }
-  const total = state.expenses.reduce((s,e)=>s+e.amt,0);
-  document.getElementById('expTotal').textContent = '¥' + total.toLocaleString();
-  document.getElementById('expSplit').textContent = total>0
+
+  closeActForm(date);
+  renderActivities(date);
+  renderStay();
+  writePath('activities/'+date, state.activities[date]);
+}
+
+/* ---------------- stay (auto-pulled from itinerary) ---------------- */
+function renderStay(){
+  const list = document.getElementById('stayList');
+  const rows = [];
+  DAYS_DEF.forEach(day=>{
+    const items = (state.activities[day.date] || []).map(normalizeActivity);
+    items.forEach(a=>{
+      if(Number(a.cost) > 0) rows.push(Object.assign({}, a, {date: day.date}));
+    });
+  });
+
+  if(rows.length===0){
+    list.innerHTML = '<div class="empty">「行程」裡還沒有填費用的項目</div>';
+  }else{
+    list.innerHTML = rows.map(r=>{
+      const d = new Date(r.date+'T00:00:00');
+      return `
+        <div class="stay-item">
+          <div class="stay-top">
+            <span class="act-tag ${CAT_CLASS[r.category]||'cat-other'}">${escapeHtml(r.category)}</span>
+            <span class="stay-date">${d.getMonth()+1}/${d.getDate()}</span>
+            <div class="stay-name">${escapeHtml(r.name)}</div>
+            <span class="stay-amt">¥${Number(r.cost||0).toLocaleString()}</span>
+          </div>
+          ${r.address || r.mapUrl ? `<div class="stay-meta">
+            ${r.address ? escapeHtml(r.address) : ''}
+            ${r.mapUrl ? ` · <a href="${escapeHtml(r.mapUrl)}" target="_blank" rel="noopener">Google 地圖</a>` : ''}
+          </div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  const total = rows.reduce((s,r)=>s+Number(r.cost||0),0);
+  document.getElementById('stayTotal').textContent = '¥' + total.toLocaleString();
+  document.getElementById('staySplit').textContent = total>0
     ? '兩人平分每人 ¥' + Math.round(total/2).toLocaleString()
     : '';
 }
 
-document.getElementById('expAdd').addEventListener('click', ()=>{
-  const nameEl = document.getElementById('expName');
-  const amtEl = document.getElementById('expAmt');
-  const name = nameEl.value.trim();
-  const amt = parseFloat(amtEl.value);
-  if(!name || isNaN(amt)) return;
-  state.expenses.push({name, amt});
-  nameEl.value=''; amtEl.value='';
-  renderExpenses();
-  saveState();
-});
+/* ---------------- todo (per-person) ---------------- */
+const WHOS = ['yuan','jiyao','shared'];
 
-/* ---------------- todo ---------------- */
 function renderTodos(){
-  const list = document.getElementById('todoList');
-  if(state.todos.length===0){
-    list.innerHTML = '<div class="empty">還沒有待辦事項</div>';
-    return;
-  }
-  list.innerHTML = state.todos.map((t,i)=>`
-    <div class="todo-row ${t.done?'done':''}">
-      <input type="checkbox" data-i="${i}" ${t.done?'checked':''}>
-      <div class="todo-text">${escapeHtml(t.text)}</div>
-      <button class="activity-del" data-i="${i}">×</button>
-    </div>
-  `).join('');
-  list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
-    cb.addEventListener('change', ()=>{
-      state.todos[parseInt(cb.dataset.i)].done = cb.checked;
-      renderTodos();
-      saveState();
+  WHOS.forEach(who=>{
+    const list = document.querySelector('.todo-list[data-who="'+who+'"]');
+    const items = (state.todos && state.todos[who]) || [];
+    if(items.length===0){
+      list.innerHTML = '<div class="empty">還沒有待辦事項</div>';
+      return;
+    }
+    list.innerHTML = items.map((t,i)=>`
+      <div class="todo-row ${t.done?'done':''}">
+        <input type="checkbox" data-who="${who}" data-i="${i}" ${t.done?'checked':''}>
+        <div class="todo-text">${escapeHtml(t.text)}</div>
+        <button class="activity-del" data-who="${who}" data-i="${i}">×</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        state.todos[who][parseInt(cb.dataset.i)].done = cb.checked;
+        renderTodos();
+        writePath('todos/'+who, state.todos[who]);
+      });
     });
-  });
-  list.querySelectorAll('.activity-del').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      state.todos.splice(parseInt(b.dataset.i),1);
-      renderTodos();
-      saveState();
+    list.querySelectorAll('.activity-del').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        state.todos[who].splice(parseInt(b.dataset.i),1);
+        renderTodos();
+        writePath('todos/'+who, state.todos[who]);
+      });
     });
   });
 }
-document.getElementById('todoAdd').addEventListener('click', addTodo);
-document.getElementById('todoInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addTodo(); });
-function addTodo(){
-  const input = document.getElementById('todoInput');
+
+document.querySelectorAll('.todo-add').forEach(btn=>{
+  btn.addEventListener('click', ()=>addTodo(btn.dataset.who));
+});
+document.querySelectorAll('.todo-input').forEach(inp=>{
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') addTodo(inp.dataset.who); });
+});
+function addTodo(who){
+  const input = document.querySelector('.todo-input[data-who="'+who+'"]');
   const val = input.value.trim();
   if(!val) return;
-  state.todos.push({text:val, done:false});
+  if(!state.todos[who]) state.todos[who] = [];
+  state.todos[who].push({text:val, done:false});
   input.value='';
   renderTodos();
-  saveState();
+  writePath('todos/'+who, state.todos[who]);
 }
 
-/* ---------------- notes ---------------- */
-const notesArea = document.getElementById('notesArea');
-let notesTimer;
-notesArea.addEventListener('input', ()=>{
-  state.notes = notesArea.value;
-  clearTimeout(notesTimer);
-  notesTimer = setTimeout(saveState, 500);
+/* ---------------- notes (per-person) ---------------- */
+let notesTimers = {};
+document.querySelectorAll('.notes-area').forEach(ta=>{
+  const who = ta.dataset.who;
+  ta.addEventListener('input', ()=>{
+    state.notes[who] = ta.value;
+    clearTimeout(notesTimers[who]);
+    notesTimers[who] = setTimeout(()=>writePath('notes/'+who, state.notes[who]), 500);
+  });
 });
+function renderNotes(){
+  document.querySelectorAll('.notes-area').forEach(ta=>{
+    const who = ta.dataset.who;
+    if(document.activeElement !== ta){
+      ta.value = (state.notes && state.notes[who]) || '';
+    }
+  });
+}
 
 /* ---------------- tabs ---------------- */
 document.querySelectorAll('.tab').forEach(tab=>{
@@ -657,13 +1035,10 @@ function escapeHtml(str){
 }
 
 /* ---------------- init ---------------- */
-(async function init(){
-  await loadState();
-  renderDday();
-  renderDays();
-  renderExpenses();
-  renderTodos();
-  notesArea.value = state.notes || '';
+(function init(){
+  initSync();
+  // if Firebase isn't ready, initSync() already called renderAll() synchronously;
+  // if it is ready, the first 'value' snapshot will trigger renderAll().
 })();
 </script>
 

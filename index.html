@@ -269,8 +269,8 @@ body{
   cursor:pointer;line-height:1;padding:0;flex:0 0 auto;
   align-self:flex-end;
 }
-.activity-del{font-size:20px;margin-left:6px;}
-.activity-edit{font-size:17px;margin-left:4px;}
+.activity-del{margin-left:6px;}
+.activity-edit{margin-left:4px;}
 .activity-edit:hover,.activity-del:hover{color:var(--ink);}
 .act-tag{
   flex:0 0 auto;
@@ -324,6 +324,17 @@ body{
 }
 .act-time-sep{color:var(--ink-soft);font-family:var(--font-mono);flex:0 0 auto;}
 .act-form textarea{min-height:56px;resize:vertical;font-size:13.5px;}
+.act-form-actions{display:flex;gap:8px;}
+.act-form-actions .act-submit{flex:1;}
+.btn-cancel{
+  flex:0 0 auto;
+  font-family:var(--font-body);font-weight:700;font-size:14px;
+  padding:9px 18px;border-radius:4px;
+  border:1px solid var(--paper-line);
+  background:transparent;color:var(--ink-soft);
+  cursor:pointer;
+}
+.btn-cancel:hover{border-color:var(--ink-soft);color:var(--ink);}
 
 .add-row{display:flex;gap:8px;}
 .add-row input{flex:1;}
@@ -896,7 +907,10 @@ function renderDays(){
           <input type="text" class="act-address" data-date="${day.date}" placeholder="地址">
           <input type="url" class="act-maplink" data-date="${day.date}" placeholder="Google Maps 連結">
           <textarea class="act-notes" data-date="${day.date}" placeholder="行程備註"></textarea>
-          <button class="btn act-submit" data-date="${day.date}">新增這個行程</button>
+          <div class="act-form-actions">
+            <button class="btn act-submit" data-date="${day.date}">新增這個行程</button>
+            <button class="btn-cancel act-cancel" data-date="${day.date}" type="button">取消</button>
+          </div>
         </div>
       </div>
     `;
@@ -920,6 +934,9 @@ function renderDays(){
   });
   document.querySelectorAll('.act-submit').forEach(btn=>{
     btn.addEventListener('click', ()=>saveActivity(btn.dataset.date));
+  });
+  document.querySelectorAll('.act-cancel').forEach(btn=>{
+    btn.addEventListener('click', ()=>closeActForm(btn.dataset.date));
   });
 }
 
@@ -992,8 +1009,8 @@ function renderActivities(date){
       <div class="activity-top">
         <span class="act-tag ${CAT_CLASS[a.category]||'cat-other'}">${escapeHtml(a.category)}</span>
         <div class="activity-name">${escapeHtml(a.name)}</div>
-        <button class="activity-edit" data-date="${date}" data-i="${i}" aria-label="編輯">✎</button>
-        <button class="activity-del" data-date="${date}" data-i="${i}" aria-label="刪除">×</button>
+        <button class="activity-edit" data-date="${date}" data-i="${i}" aria-label="編輯"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg></button>
+        <button class="activity-del" data-date="${date}" data-i="${i}" aria-label="刪除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button>
       </div>
       ${formatTimeRange(a) ? `<div class="activity-time">${formatTimeRange(a)}</div>` : ''}
       ${metaHtml ? `<div class="activity-meta">${metaHtml}</div>` : ''}

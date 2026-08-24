@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Yuan & Jiyao 的日本行</title>
+<meta property="og:title" content="Yuan & Jiyao 的日本行">
+<meta property="og:description" content="大阪・明日香・京都｜2026.9.20–9.25">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Yuan & Jiyao 的日本行">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
@@ -399,6 +404,16 @@ button.btn:active{opacity:.8;}
 .who-section[data-who="yuan"] .add-row input:focus{outline-color:var(--yuan);}
 .who-section[data-who="jiyao"] .add-row input:focus{outline-color:var(--jiyao);}
 textarea.notes-area{min-height:130px;resize:vertical;line-height:1.6;font-size:14.5px;}
+.flight-area{min-height:90px;font-family:var(--font-mono);font-size:13px;}
+.notes-divider{
+  display:flex;align-items:center;gap:12px;
+  margin:6px 0 22px;
+  color:var(--ink-soft);font-size:12px;font-family:var(--font-mono);
+  letter-spacing:.08em;
+}
+.notes-divider::before,.notes-divider::after{
+  content:'';flex:1;height:1px;background:var(--paper-line);
+}
 .sync-badge{
   display:inline-flex;align-items:center;gap:5px;
   font-size:11px;color:var(--ink-soft);
@@ -624,6 +639,18 @@ h2.section-title{
       <h3 class="who-title"><span class="who-dot"></span>共同</h3>
       <textarea class="notes-area" data-who="shared" placeholder="住宿代碼、集合地點、航班時間…兩人都要看的放這裡。"></textarea>
     </div>
+
+    <div class="notes-divider"><span>航班資訊</span></div>
+
+    <div class="who-section" data-who="yuan">
+      <h3 class="who-title"><span class="who-dot"></span>Yuan 的航班</h3>
+      <textarea class="notes-area flight-area" data-who="yuan" placeholder="去程／回程航班、時間…"></textarea>
+    </div>
+
+    <div class="who-section" data-who="jiyao">
+      <h3 class="who-title"><span class="who-dot"></span>Jiyao 的航班</h3>
+      <textarea class="notes-area flight-area" data-who="jiyao" placeholder="去程／回程航班、時間…"></textarea>
+    </div>
   </div>
 
 </div>
@@ -677,7 +704,13 @@ const LOCAL_KEY_LEGACY = 'trip-osaka-asuka-kyoto'; // kept for reference, see LO
 let state = {
   activities: {},   // {'2026-09-20': [{name,category,cost,timeStart,...}, ...]}
   todos: { yuan:[], jiyao:[], shared:[] },
-  notes: { yuan:'', jiyao:'', shared:'' }
+  notes: { yuan:'', jiyao:'', shared:'' },
+  flights: { yuan:'', jiyao:'' }
+};
+
+const DEFAULT_FLIGHTS = {
+  yuan: '去程：9/20 泰國獅航SL396_TPE-KIX_08:55-12:30',
+  jiyao: '去程：9/20_樂桃MM030_TPE-KIX_1:45-5:30\n回程：9/25_樂桃MM029_KIX-TPE_21:50-23:50'
 };
 
 /* ---------------- storage / sync ----------------
@@ -726,6 +759,14 @@ function initSync(){
       state.activities = val.activities || {};
       state.todos = val.todos || {yuan:[],jiyao:[],shared:[]};
       state.notes = val.notes || {yuan:'',jiyao:'',shared:''};
+      if(val.flights){
+        state.flights = val.flights;
+      }else{
+        // first time ever loading this trip: seed the flight info provided
+        state.flights = Object.assign({}, DEFAULT_FLIGHTS);
+        writePath('flights/yuan', state.flights.yuan);
+        writePath('flights/jiyao', state.flights.jiyao);
+      }
       renderAll();
       updateSyncTime();
     }, err=>{
@@ -737,6 +778,10 @@ function initSync(){
     try{
       const raw = localStorage.getItem(LOCAL_KEY);
       if(raw) state = Object.assign(state, JSON.parse(raw));
+      if(!state.flights || (!state.flights.yuan && !state.flights.jiyao)){
+        state.flights = Object.assign({}, DEFAULT_FLIGHTS);
+        persistLocal();
+      }
     }catch(e){}
     setSyncBadge(false);
     renderAll();
@@ -816,6 +861,7 @@ function renderAll(){
   renderStay();
   renderTodos();
   renderNotes();
+  renderFlights();
   applyPermissions();
 }
 
@@ -1213,7 +1259,7 @@ function addTodo(who){
 
 /* ---------------- notes (per-person) ---------------- */
 let notesTimers = {};
-document.querySelectorAll('.notes-area').forEach(ta=>{
+document.querySelectorAll('.notes-area:not(.flight-area)').forEach(ta=>{
   const who = ta.dataset.who;
   ta.addEventListener('input', ()=>{
     if(!canEdit(who)){ ta.value = state.notes[who] || ''; return; }
@@ -1223,10 +1269,30 @@ document.querySelectorAll('.notes-area').forEach(ta=>{
   });
 });
 function renderNotes(){
-  document.querySelectorAll('.notes-area').forEach(ta=>{
+  document.querySelectorAll('.notes-area:not(.flight-area)').forEach(ta=>{
     const who = ta.dataset.who;
     if(document.activeElement !== ta){
       ta.value = (state.notes && state.notes[who]) || '';
+    }
+  });
+}
+
+/* ---------------- flights (per-person) ---------------- */
+let flightTimers = {};
+document.querySelectorAll('.flight-area').forEach(ta=>{
+  const who = ta.dataset.who;
+  ta.addEventListener('input', ()=>{
+    if(!canEdit(who)){ ta.value = state.flights[who] || ''; return; }
+    state.flights[who] = ta.value;
+    clearTimeout(flightTimers[who]);
+    flightTimers[who] = setTimeout(()=>writePath('flights/'+who, state.flights[who]), 500);
+  });
+});
+function renderFlights(){
+  document.querySelectorAll('.flight-area').forEach(ta=>{
+    const who = ta.dataset.who;
+    if(document.activeElement !== ta){
+      ta.value = (state.flights && state.flights[who]) || '';
     }
   });
 }

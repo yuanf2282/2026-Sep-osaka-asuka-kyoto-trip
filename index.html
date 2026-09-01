@@ -77,6 +77,61 @@ body{
 .identity-btn[data-user="yuan"]:hover{border-color:var(--yuan);color:var(--yuan);}
 .identity-btn[data-user="jiyao"]:hover{border-color:var(--jiyao);color:var(--jiyao);}
 
+/* ---------- ITINERARY ADD/EDIT MODAL ---------- */
+.act-modal-overlay{
+  position:fixed;inset:0;z-index:150;
+  background:rgba(43,38,33,.55);
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:0;
+}
+.act-modal-overlay[hidden]{display:none;}
+.act-modal-box{
+  background:var(--paper-raised);
+  border-radius:16px 16px 0 0;
+  width:100%;max-width:480px;
+  max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 -8px 30px rgba(0,0,0,.2);
+}
+@media (min-width:560px){
+  .act-modal-overlay{align-items:center;padding:24px;}
+  .act-modal-box{border-radius:16px;max-height:85vh;}
+}
+.act-modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px 14px;
+  border-bottom:1px solid var(--paper-line);
+  flex:0 0 auto;
+}
+.act-modal-title{font-family:var(--font-display);font-size:19px;margin:0;}
+.act-modal-close{
+  background:none;border:none;color:var(--ink-soft);cursor:pointer;
+  padding:4px;display:flex;align-items:center;justify-content:center;
+}
+.act-modal-close:hover{color:var(--ink);}
+.act-modal-body{
+  padding:18px 20px;overflow-y:auto;flex:1 1 auto;
+  display:flex;flex-direction:column;gap:10px;
+}
+.act-field-label{
+  font-family:var(--font-body);font-size:12px;font-weight:700;
+  color:var(--ink-soft);margin:4px 0 -4px;
+}
+.act-modal-body .act-form-row{display:flex;gap:8px;}
+.act-modal-body select.act-date-select{
+  font-family:var(--font-body);font-size:14px;
+  padding:9px 11px;border:1px solid var(--paper-line);border-radius:4px;
+  background:var(--paper-raised);color:var(--ink);width:100%;
+}
+.act-modal-body textarea.act-notes{min-height:80px;resize:vertical;font-size:13.5px;}
+.act-modal-box .act-form-actions{
+  display:flex;gap:8px;
+  padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--paper-line);
+  flex:0 0 auto;
+}
+.act-modal-box .act-form-actions .act-submit{flex:1;}
+
 .identity-badge{
   display:flex;align-items:center;gap:10px;
   margin-top:14px;font-size:12px;color:var(--ink-soft);
@@ -307,21 +362,16 @@ body{
   font-size:13px;color:var(--ink-soft);line-height:1.6;
   white-space:pre-wrap;word-break:break-word;
 }
+.activity-notes a{color:var(--vermillion);text-decoration:none;border-bottom:1px solid var(--vermillion-light);}
+.activity-notes a:hover{border-bottom-color:var(--vermillion);}
 
-.act-form{
-  display:flex;flex-direction:column;gap:8px;
-  margin-top:10px;padding:12px;
-  background:var(--paper);
-  border:1px solid var(--paper-line);border-radius:6px;
-}
-.act-form[hidden]{display:none;}
 .act-form-row{display:flex;gap:8px;}
-.act-form select{
+.act-modal-body select{
   font-family:var(--font-body);font-size:14px;
   padding:9px 11px;border:1px solid var(--paper-line);border-radius:4px;
   background:var(--paper-raised);color:var(--ink);width:100%;
 }
-.act-form select.act-currency{flex:0 0 108px;width:auto;}
+.act-modal-body select.act-currency{flex:0 0 108px;width:auto;}
 .act-time-row{align-items:center;}
 .act-time-row input[type=time]{
   flex:1;font-family:var(--font-mono);font-size:13.5px;
@@ -329,7 +379,6 @@ body{
   background:var(--paper-raised);color:var(--ink);
 }
 .act-time-sep{color:var(--ink-soft);font-family:var(--font-mono);flex:0 0 auto;}
-.act-form textarea{min-height:56px;resize:vertical;font-size:13.5px;}
 .act-form-actions{display:flex;gap:8px;}
 .act-form-actions .act-submit{flex:1;}
 .btn-cancel{
@@ -346,7 +395,7 @@ body{
 .add-row input{flex:1;}
 
 /* ---------- FORM ELEMENTS ---------- */
-input[type=text],input[type=number],textarea{
+input[type=text],input[type=number],input[type=url],textarea{
   font-family:var(--font-body);
   font-size:14px;
   padding:9px 11px;
@@ -534,7 +583,7 @@ textarea.notes-area{min-height:130px;resize:vertical;line-height:1.6;font-size:1
 .sync-toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
 .sync-toast.error{background:var(--vermillion);}
 .total-box{
-  margin-top:18px;padding:16px;
+  margin-top:8px;padding:16px;
   background:var(--ink);color:var(--paper);
   border-radius:6px;
   display:flex;justify-content:space-between;align-items:baseline;
@@ -542,6 +591,13 @@ textarea.notes-area{min-height:130px;resize:vertical;line-height:1.6;font-size:1
 .total-box .label{font-size:13px;color:#c9d1ce;}
 .total-box .amt{font-family:var(--font-mono);font-weight:700;font-size:22px;}
 .split-note{font-size:12px;color:var(--ink-soft);margin-top:8px;}
+.stay-breakdown{margin-top:18px;padding:2px 2px 0;}
+.stay-breakdown-row{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:12.5px;color:var(--ink-soft);
+  padding:4px 0;
+}
+.stay-breakdown-row span:last-child{font-family:var(--font-mono);color:var(--ink);flex:0 0 auto;}
 
 /* ---------- TODO ---------- */
 .todo-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--paper-line);}
@@ -575,6 +631,53 @@ h2.section-title{
     <div class="identity-choices">
       <button class="identity-btn" data-user="yuan">Yuan</button>
       <button class="identity-btn" data-user="jiyao">Jiyao</button>
+    </div>
+  </div>
+</div>
+
+<div id="actModalOverlay" class="act-modal-overlay" hidden>
+  <div class="act-modal-box">
+    <div class="act-modal-header">
+      <h3 id="actModalTitle" class="act-modal-title">新增行程</h3>
+      <button class="act-modal-close" id="actModalCloseBtn" type="button" aria-label="關閉">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+    <div class="act-modal-body">
+      <label class="act-field-label" for="actDateSelect">日期</label>
+      <select class="act-date-select" id="actDateSelect"></select>
+
+      <label class="act-field-label" for="actName">行程名稱</label>
+      <input type="text" class="act-name" id="actName" placeholder="行程名稱">
+
+      <div class="act-form-row">
+        <select class="act-category" id="actCategory">
+          <option value="吃喝">吃喝</option>
+          <option value="景點">景點</option>
+          <option value="住宿">住宿</option>
+          <option value="其他">其他</option>
+        </select>
+        <input type="number" class="act-cost" id="actCost" placeholder="費用">
+        <select class="act-currency" id="actCurrency">
+          <option value="¥">¥ 日圓</option>
+          <option value="NT$">NT$ 台幣</option>
+        </select>
+      </div>
+      <div class="act-form-row act-time-row">
+        <input type="time" class="act-time-start" id="actTimeStart">
+        <span class="act-time-sep">~</span>
+        <input type="time" class="act-time-end" id="actTimeEnd">
+      </div>
+      <label class="act-field-label" for="actAddress">地址</label>
+      <input type="text" class="act-address" id="actAddress" placeholder="地址">
+      <label class="act-field-label" for="actMapLink">Google Maps 連結</label>
+      <input type="url" class="act-maplink" id="actMapLink" placeholder="Google Maps 連結">
+      <label class="act-field-label" for="actNotes">行程備註</label>
+      <textarea class="act-notes" id="actNotes" placeholder="行程備註"></textarea>
+    </div>
+    <div class="act-form-actions">
+      <button class="btn act-submit" id="actSubmitBtn" type="button">新增這個行程</button>
+      <button class="btn-cancel" id="actCancelBtn" type="button">取消</button>
     </div>
   </div>
 </div>
@@ -1083,34 +1186,6 @@ function renderDays(){
       </div>
       <div class="day-body">
         <div class="act-list" data-date="${day.date}"></div>
-        <div class="act-form" data-date="${day.date}" hidden>
-          <input type="text" class="act-name" data-date="${day.date}" placeholder="行程名稱">
-          <div class="act-form-row">
-            <select class="act-category" data-date="${day.date}">
-              <option value="吃喝">吃喝</option>
-              <option value="景點">景點</option>
-              <option value="住宿">住宿</option>
-              <option value="其他">其他</option>
-            </select>
-            <input type="number" class="act-cost" data-date="${day.date}" placeholder="費用">
-            <select class="act-currency" data-date="${day.date}">
-              <option value="¥">¥ 日圓</option>
-              <option value="NT$">NT$ 台幣</option>
-            </select>
-          </div>
-          <div class="act-form-row act-time-row">
-            <input type="time" class="act-time-start" data-date="${day.date}">
-            <span class="act-time-sep">~</span>
-            <input type="time" class="act-time-end" data-date="${day.date}">
-          </div>
-          <input type="text" class="act-address" data-date="${day.date}" placeholder="地址">
-          <input type="url" class="act-maplink" data-date="${day.date}" placeholder="Google Maps 連結">
-          <textarea class="act-notes" data-date="${day.date}" placeholder="行程備註"></textarea>
-          <div class="act-form-actions">
-            <button class="btn act-submit" data-date="${day.date}">新增這個行程</button>
-            <button class="btn-cancel act-cancel" data-date="${day.date}" type="button">取消</button>
-          </div>
-        </div>
       </div>
     `;
     list.appendChild(card);
@@ -1119,48 +1194,123 @@ function renderDays(){
   DAYS_DEF.forEach(day => renderActivities(day.date));
 
   document.querySelectorAll('.day-add-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const form = document.querySelector('.act-form[data-date="'+btn.dataset.date+'"]');
-      const opening = form.hasAttribute('hidden');
-      if(opening){
-        form.removeAttribute('hidden');
-        btn.classList.add('active');
-        form.scrollIntoView({behavior:'smooth', block:'center'});
-      }else{
-        closeActForm(btn.dataset.date);
-      }
-    });
-  });
-  document.querySelectorAll('.act-submit').forEach(btn=>{
-    btn.addEventListener('click', ()=>saveActivity(btn.dataset.date));
-  });
-  document.querySelectorAll('.act-cancel').forEach(btn=>{
-    btn.addEventListener('click', ()=>closeActForm(btn.dataset.date));
+    btn.addEventListener('click', ()=>openActModal('add', btn.dataset.date));
   });
 }
 
-function closeActForm(date){
-  const form = document.querySelector('.act-form[data-date="'+date+'"]');
-  const addBtn = document.querySelector('.day-add-btn[data-date="'+date+'"]');
-  const submitBtn = document.querySelector('.act-submit[data-date="'+date+'"]');
-  form.setAttribute('hidden','');
-  delete form.dataset.editIndex;
-  addBtn.classList.remove('active');
-  submitBtn.textContent = '新增這個行程';
-  clearActForm(date);
+/* ---------------- itinerary add/edit modal ---------------- */
+let actModalState = { mode:'add', originalDate:null, editIndex:null };
+
+function populateDateSelect(){
+  const sel = document.getElementById('actDateSelect');
+  if(sel.dataset.filled) return;
+  sel.innerHTML = DAYS_DEF.map(day=>{
+    const d = new Date(day.date+'T00:00:00');
+    const label = (d.getMonth()+1)+'/'+d.getDate()+' 週'+WD[d.getDay()]+' '+CITY[day.city].name;
+    return `<option value="${day.date}">${label}</option>`;
+  }).join('');
+  sel.dataset.filled = '1';
 }
 
-function clearActForm(date){
-  document.querySelector('.act-name[data-date="'+date+'"]').value = '';
-  document.querySelector('.act-category[data-date="'+date+'"]').value = '吃喝';
-  document.querySelector('.act-address[data-date="'+date+'"]').value = '';
-  document.querySelector('.act-maplink[data-date="'+date+'"]').value = '';
-  document.querySelector('.act-cost[data-date="'+date+'"]').value = '';
-  document.querySelector('.act-currency[data-date="'+date+'"]').value = '¥';
-  document.querySelector('.act-notes[data-date="'+date+'"]').value = '';
-  document.querySelector('.act-time-start[data-date="'+date+'"]').value = '';
-  document.querySelector('.act-time-end[data-date="'+date+'"]').value = '';
+function clearActModalFields(){
+  document.getElementById('actName').value = '';
+  document.getElementById('actCategory').value = '吃喝';
+  document.getElementById('actCost').value = '';
+  document.getElementById('actCurrency').value = '¥';
+  document.getElementById('actTimeStart').value = '';
+  document.getElementById('actTimeEnd').value = '';
+  document.getElementById('actAddress').value = '';
+  document.getElementById('actMapLink').value = '';
+  document.getElementById('actNotes').value = '';
 }
+
+function openActModal(mode, date, idx){
+  actModalState.mode = mode;
+  actModalState.originalDate = date;
+  actModalState.editIndex = (typeof idx === 'number') ? idx : null;
+
+  populateDateSelect();
+  document.getElementById('actDateSelect').value = date;
+
+  if(mode === 'edit'){
+    const item = normalizeActivity(state.activities[date][idx]);
+    document.getElementById('actName').value = item.name;
+    document.getElementById('actCategory').value = item.category;
+    document.getElementById('actCost').value = item.cost || '';
+    document.getElementById('actCurrency').value = item.currency || '¥';
+    document.getElementById('actTimeStart').value = item.timeStart || '';
+    document.getElementById('actTimeEnd').value = item.timeEnd || '';
+    document.getElementById('actAddress').value = item.address || '';
+    document.getElementById('actMapLink').value = item.mapUrl || '';
+    document.getElementById('actNotes').value = item.notes || '';
+    document.getElementById('actModalTitle').textContent = '編輯行程';
+    document.getElementById('actSubmitBtn').textContent = '更新這個行程';
+  }else{
+    clearActModalFields();
+    document.getElementById('actModalTitle').textContent = '新增行程';
+    document.getElementById('actSubmitBtn').textContent = '新增這個行程';
+  }
+
+  document.getElementById('actModalOverlay').removeAttribute('hidden');
+  document.getElementById('actName').focus();
+}
+
+function closeActModal(){
+  document.getElementById('actModalOverlay').setAttribute('hidden','');
+  clearActModalFields();
+}
+
+function saveActivityFromModal(){
+  const nameEl = document.getElementById('actName');
+  const name = nameEl.value.trim();
+  if(!name){ nameEl.focus(); return; }
+
+  const newDate = document.getElementById('actDateSelect').value;
+  const entry = {
+    name,
+    category: document.getElementById('actCategory').value,
+    address: document.getElementById('actAddress').value.trim(),
+    mapUrl: document.getElementById('actMapLink').value.trim(),
+    cost: document.getElementById('actCost').value ? parseFloat(document.getElementById('actCost').value) : 0,
+    currency: document.getElementById('actCurrency').value,
+    notes: document.getElementById('actNotes').value.trim(),
+    timeStart: document.getElementById('actTimeStart').value,
+    timeEnd: document.getElementById('actTimeEnd').value
+  };
+
+  if(actModalState.mode === 'edit'){
+    const origDate = actModalState.originalDate;
+    const idx = actModalState.editIndex;
+    if(newDate === origDate){
+      state.activities[origDate][idx] = entry;
+      renderActivities(origDate);
+      writePath('activities/'+origDate, state.activities[origDate]);
+    }else{
+      state.activities[origDate].splice(idx, 1);
+      if(!state.activities[newDate]) state.activities[newDate] = [];
+      state.activities[newDate].push(entry);
+      renderActivities(origDate);
+      renderActivities(newDate);
+      writePath('activities/'+origDate, state.activities[origDate]);
+      writePath('activities/'+newDate, state.activities[newDate]);
+    }
+  }else{
+    if(!state.activities[newDate]) state.activities[newDate] = [];
+    state.activities[newDate].push(entry);
+    renderActivities(newDate);
+    writePath('activities/'+newDate, state.activities[newDate]);
+  }
+
+  renderStay();
+  closeActModal();
+}
+
+document.getElementById('actSubmitBtn').addEventListener('click', saveActivityFromModal);
+document.getElementById('actCancelBtn').addEventListener('click', closeActModal);
+document.getElementById('actModalCloseBtn').addEventListener('click', closeActModal);
+document.getElementById('actModalOverlay').addEventListener('click', e=>{
+  if(e.target.id === 'actModalOverlay') closeActModal();
+});
 
 const CAT_CLASS = {'吃喝':'cat-eat','景點':'cat-sight','觀光':'cat-sight','住宿':'cat-stay','其他':'cat-other'};
 const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':'var(--gold)','住宿':'var(--moss)','其他':'var(--ink-soft)'};
@@ -1222,7 +1372,7 @@ function renderActivities(date){
       </div>
       ${formatTimeRange(a) ? `<div class="activity-time">${formatTimeRange(a)}</div>` : ''}
       ${metaHtml ? `<div class="activity-meta">${metaHtml}</div>` : ''}
-      ${a.notes ? `<div class="activity-notes">${escapeHtml(a.notes)}</div>` : ''}
+      ${a.notes ? `<div class="activity-notes">${linkifyNotes(a.notes)}</div>` : ''}
     </div>
   `;
   }).join('');
@@ -1235,72 +1385,8 @@ function renderActivities(date){
     });
   });
   el.querySelectorAll('.activity-edit').forEach(b=>{
-    b.addEventListener('click', ()=>editActivity(date, parseInt(b.dataset.i)));
+    b.addEventListener('click', ()=>openActModal('edit', date, parseInt(b.dataset.i)));
   });
-}
-
-function editActivity(date, idx){
-  const item = normalizeActivity(state.activities[date][idx]);
-  document.querySelector('.act-name[data-date="'+date+'"]').value = item.name;
-  document.querySelector('.act-category[data-date="'+date+'"]').value = item.category;
-  document.querySelector('.act-address[data-date="'+date+'"]').value = item.address;
-  document.querySelector('.act-maplink[data-date="'+date+'"]').value = item.mapUrl;
-  document.querySelector('.act-cost[data-date="'+date+'"]').value = item.cost || '';
-  document.querySelector('.act-currency[data-date="'+date+'"]').value = item.currency || '¥';
-  document.querySelector('.act-notes[data-date="'+date+'"]').value = item.notes;
-  document.querySelector('.act-time-start[data-date="'+date+'"]').value = item.timeStart || '';
-  document.querySelector('.act-time-end[data-date="'+date+'"]').value = item.timeEnd || '';
-
-  const form = document.querySelector('.act-form[data-date="'+date+'"]');
-  const addBtn = document.querySelector('.day-add-btn[data-date="'+date+'"]');
-  const submitBtn = document.querySelector('.act-submit[data-date="'+date+'"]');
-  form.dataset.editIndex = idx;
-  form.removeAttribute('hidden');
-  addBtn.classList.add('active');
-  submitBtn.textContent = '更新這個行程';
-  form.scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function saveActivity(date){
-  const nameEl = document.querySelector('.act-name[data-date="'+date+'"]');
-  const catEl = document.querySelector('.act-category[data-date="'+date+'"]');
-  const addrEl = document.querySelector('.act-address[data-date="'+date+'"]');
-  const mapEl = document.querySelector('.act-maplink[data-date="'+date+'"]');
-  const costEl = document.querySelector('.act-cost[data-date="'+date+'"]');
-  const currencyEl = document.querySelector('.act-currency[data-date="'+date+'"]');
-  const notesEl = document.querySelector('.act-notes[data-date="'+date+'"]');
-  const startEl = document.querySelector('.act-time-start[data-date="'+date+'"]');
-  const endEl = document.querySelector('.act-time-end[data-date="'+date+'"]');
-  const form = document.querySelector('.act-form[data-date="'+date+'"]');
-
-  const name = nameEl.value.trim();
-  if(!name){ nameEl.focus(); return; }
-
-  const entry = {
-    name,
-    category: catEl.value,
-    address: addrEl.value.trim(),
-    mapUrl: mapEl.value.trim(),
-    cost: costEl.value ? parseFloat(costEl.value) : 0,
-    currency: currencyEl.value,
-    notes: notesEl.value.trim(),
-    timeStart: startEl.value,
-    timeEnd: endEl.value
-  };
-
-  if(!state.activities[date]) state.activities[date] = [];
-
-  const editIdx = form.dataset.editIndex;
-  if(editIdx !== undefined && editIdx !== ''){
-    state.activities[date][parseInt(editIdx)] = entry;
-  }else{
-    state.activities[date].push(entry);
-  }
-
-  closeActForm(date);
-  renderActivities(date);
-  renderStay();
-  writePath('activities/'+date, state.activities[date]);
 }
 
 /* ---------------- stay (auto-pulled from itinerary) ---------------- */
@@ -1337,27 +1423,40 @@ function renderStay(){
     }).join('');
   }
 
-  // totals grouped by currency, since ¥ and NT$ can't be summed together
-  const totalsByCurrency = {};
+  // totals grouped by currency, since ¥ and NT$ can't be summed together.
+  // 住宿 is assumed to be one shared bill (split in half); other categories are
+  // assumed to already be each person's own individual cost (not split).
+  const stayByCurrency = {};
+  const otherByCurrency = {};
   rows.forEach(r=>{
     const cur = r.currency || '¥';
-    totalsByCurrency[cur] = (totalsByCurrency[cur] || 0) + Number(r.cost || 0);
+    const amt = Number(r.cost || 0);
+    if(r.category === '住宿'){
+      stayByCurrency[cur] = (stayByCurrency[cur] || 0) + amt;
+    }else{
+      otherByCurrency[cur] = (otherByCurrency[cur] || 0) + amt;
+    }
   });
+  const currencies = Array.from(new Set([...Object.keys(stayByCurrency), ...Object.keys(otherByCurrency)]));
 
   const totalsEl = document.getElementById('stayTotals');
-  const currencies = Object.keys(totalsByCurrency);
   if(currencies.length === 0){
     totalsEl.innerHTML = '';
   }else{
     totalsEl.innerHTML = currencies.map(cur=>{
-      const total = totalsByCurrency[cur];
-      const label = cur === '¥' ? '日圓總計' : cur === 'NT$' ? '台幣總計' : (cur + ' 總計');
+      const stayTotal = stayByCurrency[cur] || 0;
+      const otherTotal = otherByCurrency[cur] || 0;
+      const perPerson = Math.round(stayTotal/2) + otherTotal;
+      const c = escapeHtml(cur);
       return `
-        <div class="total-box">
-          <div><div class="label">${label}</div></div>
-          <div class="amt">${escapeHtml(cur)}${total.toLocaleString()}</div>
+        <div class="stay-breakdown">
+          ${stayTotal > 0 ? `<div class="stay-breakdown-row"><span>住宿總計（兩人平分）</span><span>${c}${stayTotal.toLocaleString()}</span></div>` : ''}
+          ${otherTotal > 0 ? `<div class="stay-breakdown-row"><span>其他花費（景點／吃喝／其他，各自計算）</span><span>${c}${otherTotal.toLocaleString()}</span></div>` : ''}
         </div>
-        <p class="split-note">兩人平分每人 ${escapeHtml(cur)}${Math.round(total/2).toLocaleString()}</p>
+        <div class="total-box">
+          <div><div class="label">每人預估總花費</div></div>
+          <div class="amt">${c}${perPerson.toLocaleString()}</div>
+        </div>
       `;
     }).join('');
   }
@@ -1483,6 +1582,27 @@ function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str;
   return d.innerHTML;
+}
+
+// turns markdown-style [text](url) and bare URLs into clickable links, safely escaping everything else
+function linkifyNotes(text){
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/g;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while((match = linkRegex.exec(text)) !== null){
+    result += escapeHtml(text.slice(lastIndex, match.index));
+    if(match[1] !== undefined){
+      result += `<a href="${escapeHtml(match[2])}" target="_blank" rel="noopener">${escapeHtml(match[1])}</a>`;
+    }else{
+      const raw = match[3];
+      const href = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+      result += `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(raw)}</a>`;
+    }
+    lastIndex = linkRegex.lastIndex;
+  }
+  result += escapeHtml(text.slice(lastIndex));
+  return result;
 }
 
 /* ---------------- init ---------------- */

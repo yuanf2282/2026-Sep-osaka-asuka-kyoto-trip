@@ -117,6 +117,18 @@ body{
   font-family:var(--font-body);font-size:12px;font-weight:700;
   color:var(--ink-soft);margin:4px 0 -4px;
 }
+.act-who-picker{display:flex;gap:6px;}
+.act-who-btn{
+  flex:1;
+  font-family:var(--font-body);font-size:13px;font-weight:700;
+  padding:9px 8px;border-radius:6px;
+  border:1.5px solid var(--paper-line);
+  background:var(--paper-raised);color:var(--ink-soft);
+  cursor:pointer;
+}
+.act-who-btn[data-who="yuan"].active{background:var(--yuan);border-color:var(--yuan);color:#fff;}
+.act-who-btn[data-who="jiyao"].active{background:var(--jiyao);border-color:var(--jiyao);color:#fff;}
+.act-who-btn[data-who="shared"].active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 .act-modal-body .act-form-row{display:flex;gap:8px;}
 .act-modal-body select.act-date-select{
   font-family:var(--font-body);font-size:14px;
@@ -314,13 +326,33 @@ body{
 
 .activity-card{
   padding:12px 14px;
-  margin-bottom:10px;
   background:var(--paper-raised);
   border:1px solid var(--paper-line);
   border-left:4px solid var(--cat-color, var(--ink-soft));
   border-radius:10px;
 }
-.activity-card:last-child{margin-bottom:0;}
+
+.act-list{position:relative;}
+.act-list::before{
+  content:'';position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:var(--paper-line);transform:translateX(-50%);
+}
+.act-row{display:flex;position:relative;margin-bottom:10px;}
+.act-row:last-child{margin-bottom:0;}
+.act-row.owner-yuan{justify-content:flex-start;}
+.act-row.owner-jiyao{justify-content:flex-end;}
+.act-row.owner-shared{justify-content:center;}
+.act-row.owner-yuan .activity-card,
+.act-row.owner-jiyao .activity-card{max-width:82%;}
+.act-row.owner-shared .activity-card{max-width:88%;background:var(--paper-raised);}
+.activity-owner-label{
+  font-family:var(--font-mono);font-size:9px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:5px;
+}
+.activity-owner-label.owner-yuan{color:var(--yuan);}
+.activity-owner-label.owner-jiyao{color:var(--jiyao);}
+.activity-owner-label.owner-shared{color:var(--ink-soft);}
 .activity-top{display:flex;gap:8px;}
 .activity-name{flex:1;font-weight:700;font-size:18px;line-height:1.15;align-self:flex-start;margin:0;}
 .activity-del,.activity-edit{
@@ -646,6 +678,13 @@ h2.section-title{
     <div class="act-modal-body">
       <label class="act-field-label" for="actDateSelect">日期</label>
       <select class="act-date-select" id="actDateSelect"></select>
+
+      <label class="act-field-label">誰的行程</label>
+      <div class="act-who-picker" id="actWhoPicker">
+        <button type="button" class="act-who-btn" data-who="shared">共同</button>
+        <button type="button" class="act-who-btn" data-who="yuan">Yuan</button>
+        <button type="button" class="act-who-btn" data-who="jiyao">Jiyao</button>
+      </div>
 
       <label class="act-field-label" for="actName">行程名稱</label>
       <input type="text" class="act-name" id="actName" placeholder="行程名稱">
@@ -1212,6 +1251,19 @@ function populateDateSelect(){
   sel.dataset.filled = '1';
 }
 
+function setActWho(who){
+  document.querySelectorAll('.act-who-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.who === who);
+  });
+}
+function getActWho(){
+  const active = document.querySelector('.act-who-btn.active');
+  return active ? active.dataset.who : 'shared';
+}
+document.querySelectorAll('.act-who-btn').forEach(b=>{
+  b.addEventListener('click', ()=>setActWho(b.dataset.who));
+});
+
 function clearActModalFields(){
   document.getElementById('actName').value = '';
   document.getElementById('actCategory').value = '吃喝';
@@ -1222,6 +1274,7 @@ function clearActModalFields(){
   document.getElementById('actAddress').value = '';
   document.getElementById('actMapLink').value = '';
   document.getElementById('actNotes').value = '';
+  setActWho('shared');
 }
 
 function openActModal(mode, date, idx){
@@ -1243,10 +1296,12 @@ function openActModal(mode, date, idx){
     document.getElementById('actAddress').value = item.address || '';
     document.getElementById('actMapLink').value = item.mapUrl || '';
     document.getElementById('actNotes').value = item.notes || '';
+    setActWho(item.who || 'shared');
     document.getElementById('actModalTitle').textContent = '編輯行程';
     document.getElementById('actSubmitBtn').textContent = '更新這個行程';
   }else{
     clearActModalFields();
+    setActWho(currentUser || 'shared');
     document.getElementById('actModalTitle').textContent = '新增行程';
     document.getElementById('actSubmitBtn').textContent = '新增這個行程';
   }
@@ -1275,7 +1330,8 @@ function saveActivityFromModal(){
     currency: document.getElementById('actCurrency').value,
     notes: document.getElementById('actNotes').value.trim(),
     timeStart: document.getElementById('actTimeStart').value,
-    timeEnd: document.getElementById('actTimeEnd').value
+    timeEnd: document.getElementById('actTimeEnd').value,
+    who: getActWho()
   };
 
   if(actModalState.mode === 'edit'){
@@ -1317,8 +1373,12 @@ const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':
 
 function normalizeActivity(item){
   // supports legacy plain-string activities from before this feature existed
-  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:''};
-  return Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:''}, item);
+  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared'};
+  return Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared'}, item);
+}
+
+function whoLabel(who){
+  return who === 'yuan' ? 'Yuan' : who === 'jiyao' ? 'Jiyao' : '共同';
 }
 
 function formatTimeRange(a){
@@ -1363,7 +1423,9 @@ function renderActivities(date){
       metaHtml += `<span class="activity-cost">${escapeHtml(a.currency||'¥')}${Number(a.cost).toLocaleString()}</span>`;
     }
     return `
+    <div class="act-row owner-${a.who||'shared'}">
     <div class="activity-card" style="--cat-color:${CAT_COLOR[a.category]||'var(--ink-soft)'}">
+      <div class="activity-owner-label owner-${a.who||'shared'}">${escapeHtml(whoLabel(a.who))}</div>
       <div class="activity-top">
         <span class="act-tag ${CAT_CLASS[a.category]||'cat-other'}">${escapeHtml(a.category)}</span>
         <div class="activity-name">${escapeHtml(a.name)}</div>
@@ -1373,6 +1435,7 @@ function renderActivities(date){
       ${formatTimeRange(a) ? `<div class="activity-time">${formatTimeRange(a)}</div>` : ''}
       ${metaHtml ? `<div class="activity-meta">${metaHtml}</div>` : ''}
       ${a.notes ? `<div class="activity-notes">${linkifyNotes(a.notes)}</div>` : ''}
+    </div>
     </div>
   `;
   }).join('');

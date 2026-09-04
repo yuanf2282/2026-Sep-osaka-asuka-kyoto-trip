@@ -1308,9 +1308,9 @@ function saveActivityFromModal(){
 document.getElementById('actSubmitBtn').addEventListener('click', saveActivityFromModal);
 document.getElementById('actCancelBtn').addEventListener('click', closeActModal);
 document.getElementById('actModalCloseBtn').addEventListener('click', closeActModal);
-document.getElementById('actModalOverlay').addEventListener('click', e=>{
-  if(e.target.id === 'actModalOverlay') closeActModal();
-});
+// deliberately NOT closing on backdrop click — on mobile, pasting/scrolling/keyboard
+// transitions can misfire a tap onto the backdrop and wipe out unsaved input.
+// Closing now only happens via the explicit × or 取消 buttons.
 
 const CAT_CLASS = {'吃喝':'cat-eat','景點':'cat-sight','觀光':'cat-sight','住宿':'cat-stay','其他':'cat-other'};
 const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':'var(--gold)','住宿':'var(--moss)','其他':'var(--ink-soft)'};

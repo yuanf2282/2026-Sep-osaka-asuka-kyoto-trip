@@ -118,7 +118,7 @@ body{
   color:var(--ink-soft);margin:4px 0 -4px;
 }
 .act-who-picker{display:flex;gap:6px;}
-.act-who-btn{
+.act-who-btn,.exp-who-btn{
   flex:1;
   font-family:var(--font-body);font-size:13px;font-weight:700;
   padding:9px 8px;border-radius:6px;
@@ -126,10 +126,17 @@ body{
   background:var(--paper-raised);color:var(--ink-soft);
   cursor:pointer;
 }
-.act-who-btn[data-who="yuan"].active{background:var(--yuan);border-color:var(--yuan);color:#fff;}
-.act-who-btn[data-who="jiyao"].active{background:var(--jiyao);border-color:var(--jiyao);color:#fff;}
-.act-who-btn[data-who="shared"].active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+.act-who-btn[data-who="yuan"].active,.exp-who-btn[data-who="yuan"].active{background:var(--yuan);border-color:var(--yuan);color:#fff;}
+.act-who-btn[data-who="jiyao"].active,.exp-who-btn[data-who="jiyao"].active{background:var(--jiyao);border-color:var(--jiyao);color:#fff;}
+.act-who-btn[data-who="shared"].active,.exp-who-btn[data-who="shared"].active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 .act-modal-body .act-form-row{display:flex;gap:8px;}
+.quick-exp-btn{
+  display:block;width:100%;margin-bottom:16px;
+  background:none;border:1px dashed var(--paper-line);
+  color:var(--ink-soft);font-family:var(--font-body);font-weight:700;font-size:13px;
+  padding:11px 12px;border-radius:8px;cursor:pointer;
+}
+.quick-exp-btn:hover{border-color:var(--vermillion);color:var(--vermillion);}
 .act-modal-body select.act-date-select{
   font-family:var(--font-body);font-size:14px;
   padding:9px 11px;border:1px solid var(--paper-line);border-radius:4px;
@@ -483,6 +490,17 @@ button.btn:active{opacity:.8;}
 .stay-amt{font-family:var(--font-mono);font-weight:700;color:var(--ink);flex:0 0 auto;}
 .stay-meta{margin-top:4px;font-size:12.5px;color:var(--ink-soft);}
 .stay-meta a{color:var(--ink-soft);}
+.stay-source-tag{
+  flex:0 0 auto;font-family:var(--font-body);font-size:9px;font-weight:700;
+  padding:2px 7px;border-radius:20px;
+  background:var(--paper);border:1px solid var(--paper-line);color:var(--ink-soft);
+}
+.stay-edit,.stay-del{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;flex:0 0 auto;
+  background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:0;
+}
+.stay-edit:hover,.stay-del:hover{color:var(--ink);}
 
 /* ---------- SHARED / PER-PERSON SECTIONS ---------- */
 .who-section{margin-bottom:26px;}
@@ -755,6 +773,62 @@ h2.section-title{
   </div>
 </div>
 
+<div id="expModalOverlay" class="act-modal-overlay" hidden>
+  <div class="act-modal-box">
+    <div class="act-modal-header">
+      <h3 id="expModalTitle" class="act-modal-title">快速記一筆</h3>
+      <button class="act-modal-close" id="expModalCloseBtn" type="button" aria-label="關閉">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+    </div>
+    <div class="act-modal-body">
+      <label class="act-field-label" for="expDateSelect">日期</label>
+      <select class="act-date-select" id="expDateSelect"></select>
+
+      <label class="act-field-label">誰的</label>
+      <div class="act-who-picker" id="expWhoPicker">
+        <button type="button" class="exp-who-btn" data-who="shared">共同</button>
+        <button type="button" class="exp-who-btn" data-who="yuan">Yuan</button>
+        <button type="button" class="exp-who-btn" data-who="jiyao">Jiyao</button>
+      </div>
+
+      <label class="act-field-label" for="expName">項目名稱</label>
+      <input type="text" class="act-name" id="expName" placeholder="例如：超商飲料">
+
+      <div class="act-form-row">
+        <select class="act-category" id="expCategory">
+          <option value="吃喝">吃喝</option>
+          <option value="景點">景點</option>
+          <option value="住宿">住宿</option>
+          <option value="其他">其他</option>
+        </select>
+        <input type="number" class="act-cost" id="expCost" placeholder="費用">
+        <select class="act-currency" id="expCurrency">
+          <option value="¥">¥ 日圓</option>
+          <option value="NT$">NT$ 台幣</option>
+        </select>
+      </div>
+
+      <label class="act-checkbox-row" for="expSplitCost">
+        <input type="checkbox" id="expSplitCost">
+        <span>兩人平分這筆費用</span>
+      </label>
+      <div id="expPaidByRow" class="act-paidby-row" hidden>
+        <label class="act-field-label" for="expPaidBy">誰先付的</label>
+        <select id="expPaidBy">
+          <option value="">尚未指定</option>
+          <option value="yuan">Yuan</option>
+          <option value="jiyao">Jiyao</option>
+        </select>
+      </div>
+    </div>
+    <div class="act-form-actions">
+      <button class="btn act-submit" id="expSubmitBtn" type="button">新增這筆記帳</button>
+      <button class="btn-cancel" id="expCancelBtn" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
 <div class="hero">
   <div class="hero-inner">
     <p class="eyebrow">Itinerary · Osaka / Asuka / Kyoto</p>
@@ -943,6 +1017,7 @@ h2.section-title{
     </div>
 
     <div id="stayOverviewView">
+      <button class="quick-exp-btn" id="quickExpBtn" type="button">+ 快速記一筆</button>
       <div id="stayList"></div>
       <div id="stayTotals"></div>
     </div>
@@ -1080,7 +1155,8 @@ let state = {
   activities: {},   // {'2026-09-20': [{name,category,cost,timeStart,...}, ...]}
   todos: { yuan:[], jiyao:[], shared:[] },
   notes: { yuan:'', jiyao:'', shared:'' },
-  repayments: []    // [{direction:'yuan-to-jiyao'|'jiyao-to-yuan', amount, currency}, ...]
+  repayments: [],   // [{direction:'yuan-to-jiyao'|'jiyao-to-yuan', amount, currency}, ...]
+  expenses: []      // ad-hoc costs not tied to a planned itinerary item, e.g. konbini stops
 };
 
 /* ---------------- storage / sync ----------------
@@ -1130,6 +1206,7 @@ function initSync(){
       state.todos = val.todos || {yuan:[],jiyao:[],shared:[]};
       state.notes = val.notes || {yuan:'',jiyao:'',shared:''};
       state.repayments = val.repayments || [];
+      state.expenses = val.expenses || [];
       renderAll();
       updateSyncTime();
     }, err=>{
@@ -1456,6 +1533,126 @@ document.getElementById('actModalCloseBtn').addEventListener('click', closeActMo
 // transitions can misfire a tap onto the backdrop and wipe out unsaved input.
 // Closing now only happens via the explicit × or 取消 buttons.
 
+/* ---------------- quick expense (記帳) modal ---------------- */
+let expModalState = { mode:'add', editIndex:null };
+
+function setExpWho(who){
+  document.querySelectorAll('.exp-who-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.who === who);
+  });
+  updateExpPaidByVisibility();
+}
+function getExpWho(){
+  const active = document.querySelector('.exp-who-btn.active');
+  return active ? active.dataset.who : 'shared';
+}
+document.querySelectorAll('.exp-who-btn').forEach(b=>{
+  b.addEventListener('click', ()=>setExpWho(b.dataset.who));
+});
+
+function updateExpPaidByVisibility(){
+  const who = getExpWho();
+  const splitEl = document.getElementById('expSplitCost');
+  const row = document.getElementById('expPaidByRow');
+  row.hidden = !((who === 'shared') && splitEl && splitEl.checked);
+}
+document.getElementById('expSplitCost').addEventListener('change', updateExpPaidByVisibility);
+document.getElementById('expCategory').addEventListener('change', ()=>{
+  document.getElementById('expSplitCost').checked = defaultSplitCost(document.getElementById('expCategory').value);
+  updateExpPaidByVisibility();
+});
+
+function populateExpDateSelect(){
+  const sel = document.getElementById('expDateSelect');
+  if(sel.dataset.filled) return;
+  sel.innerHTML = DAYS_DEF.map(day=>{
+    const d = new Date(day.date+'T00:00:00');
+    const label = (d.getMonth()+1)+'/'+d.getDate()+' 週'+WD[d.getDay()]+' '+CITY[day.city].name;
+    return `<option value="${day.date}">${label}</option>`;
+  }).join('');
+  sel.dataset.filled = '1';
+}
+
+function clearExpModalFields(){
+  document.getElementById('expName').value = '';
+  document.getElementById('expCategory').value = '吃喝';
+  document.getElementById('expCost').value = '';
+  document.getElementById('expCurrency').value = '¥';
+  document.getElementById('expSplitCost').checked = false;
+  document.getElementById('expPaidBy').value = '';
+  setExpWho('shared');
+}
+
+function openExpModal(mode, idx){
+  expModalState.mode = mode;
+  expModalState.editIndex = (typeof idx === 'number') ? idx : null;
+  populateExpDateSelect();
+
+  if(mode === 'edit'){
+    const item = normalizeExpense(state.expenses[idx]);
+    document.getElementById('expDateSelect').value = item.date || DAYS_DEF[0].date;
+    document.getElementById('expName').value = item.name;
+    document.getElementById('expCategory').value = item.category;
+    document.getElementById('expCost').value = item.cost || '';
+    document.getElementById('expCurrency').value = item.currency || '¥';
+    document.getElementById('expSplitCost').checked = !!item.splitCost;
+    document.getElementById('expPaidBy').value = item.paidBy || '';
+    setExpWho(item.who || 'shared');
+    updateExpPaidByVisibility();
+    document.getElementById('expModalTitle').textContent = '編輯記帳';
+    document.getElementById('expSubmitBtn').textContent = '更新這筆記帳';
+  }else{
+    clearExpModalFields();
+    document.getElementById('expDateSelect').value = DAYS_DEF[0].date;
+    document.getElementById('expModalTitle').textContent = '快速記一筆';
+    document.getElementById('expSubmitBtn').textContent = '新增這筆記帳';
+  }
+
+  document.getElementById('expModalOverlay').removeAttribute('hidden');
+  document.getElementById('expName').focus();
+}
+
+function closeExpModal(){
+  document.getElementById('expModalOverlay').setAttribute('hidden','');
+  clearExpModalFields();
+}
+
+function saveExpenseFromModal(){
+  const nameEl = document.getElementById('expName');
+  const name = nameEl.value.trim();
+  if(!name){ nameEl.focus(); return; }
+
+  const who = getExpWho();
+  const isSplit = document.getElementById('expSplitCost').checked;
+  const entry = {
+    name,
+    category: document.getElementById('expCategory').value,
+    cost: document.getElementById('expCost').value ? parseFloat(document.getElementById('expCost').value) : 0,
+    currency: document.getElementById('expCurrency').value,
+    who: who,
+    splitCost: isSplit,
+    paidBy: (who === 'shared' && isSplit) ? document.getElementById('expPaidBy').value : '',
+    date: document.getElementById('expDateSelect').value
+  };
+
+  if(!state.expenses) state.expenses = [];
+  if(expModalState.mode === 'edit'){
+    state.expenses[expModalState.editIndex] = entry;
+  }else{
+    state.expenses.push(entry);
+  }
+
+  writePath('expenses', state.expenses);
+  renderStay();
+  closeExpModal();
+}
+
+document.getElementById('quickExpBtn').addEventListener('click', ()=>openExpModal('add'));
+document.getElementById('expSubmitBtn').addEventListener('click', saveExpenseFromModal);
+document.getElementById('expCancelBtn').addEventListener('click', closeExpModal);
+document.getElementById('expModalCloseBtn').addEventListener('click', closeExpModal);
+// same deliberate choice as the itinerary modal: no backdrop-click-to-close.
+
 const CAT_CLASS = {'吃喝':'cat-eat','景點':'cat-sight','觀光':'cat-sight','住宿':'cat-stay','其他':'cat-other'};
 const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':'var(--gold)','住宿':'var(--moss)','其他':'var(--ink-soft)'};
 
@@ -1549,21 +1746,15 @@ function renderActivities(date){
 /* ---------------- stay (auto-pulled from itinerary) ---------------- */
 function renderStay(){
   const list = document.getElementById('stayList');
-  const rows = [];
-  DAYS_DEF.forEach(day=>{
-    const items = (state.activities[day.date] || []).map(normalizeActivity);
-    items.forEach(a=>{
-      if(Number(a.cost) > 0) rows.push(Object.assign({}, a, {date: day.date}));
-    });
-  });
+  const rows = getAllCostRows();
 
-  // 「總覽」只顯示跟目前身份有關的項目：共同行程 + 自己的個人行程，
-  // 對方專屬的行程不顯示、也不計入自己的總計。
+  // 「總覽」只顯示跟目前身份有關的項目：共同行程/記帳 + 自己的個人項目，
+  // 對方專屬的項目不顯示、也不計入自己的總計。
   const me = currentUser || 'shared';
   const myRows = rows.filter(r => (r.who || 'shared') === 'shared' || (r.who || 'shared') === me);
 
   if(myRows.length===0){
-    list.innerHTML = '<div class="empty">「行程」裡還沒有跟你有關、且填了費用的項目</div>';
+    list.innerHTML = '<div class="empty">還沒有跟你有關、且填了費用的項目</div>';
   }else{
     list.innerHTML = myRows.map(r=>{
       const d = new Date(r.date+'T00:00:00');
@@ -1573,18 +1764,22 @@ function renderStay(){
       if(who === 'shared'){
         const perPerson = r.splitCost ? (Number(r.cost)/2) : Number(r.cost);
         metaText = r.splitCost
-          ? `共同行程，兩人平分，一人份 ${escapeHtml(cur)}${Math.round(perPerson).toLocaleString()}`
-          : `共同行程，兩人各付 ${escapeHtml(cur)}${Math.round(perPerson).toLocaleString()}`;
+          ? `共同項目，兩人平分，一人份 ${escapeHtml(cur)}${Math.round(perPerson).toLocaleString()}`
+          : `共同項目，兩人各付 ${escapeHtml(cur)}${Math.round(perPerson).toLocaleString()}`;
       }else{
         metaText = `僅 ${escapeHtml(whoLabel(who))} 需付這筆費用`;
       }
+      const sourceTag = r._source === 'expense' ? '<span class="stay-source-tag">記帳</span>' : '';
       return `
         <div class="stay-item">
           <div class="stay-top">
             <span class="act-tag ${CAT_CLASS[r.category]||'cat-other'}">${escapeHtml(r.category)}</span>
+            ${sourceTag}
             <span class="stay-date">${d.getMonth()+1}/${d.getDate()}</span>
             <div class="stay-name">${escapeHtml(r.name)}</div>
             <span class="stay-amt">${escapeHtml(cur)}${Number(r.cost||0).toLocaleString()}</span>
+            <button class="stay-edit" data-source="${r._source}" data-date="${r.date||''}" data-i="${r._index}" aria-label="編輯"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg></button>
+            <button class="stay-del" data-source="${r._source}" data-date="${r.date||''}" data-i="${r._index}" aria-label="刪除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button>
           </div>
           <div class="stay-meta">
             ${metaText}
@@ -1594,10 +1789,31 @@ function renderStay(){
         </div>
       `;
     }).join('');
+
+    list.querySelectorAll('.stay-edit').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(b.dataset.source === 'activity') openActModal('edit', b.dataset.date, parseInt(b.dataset.i));
+        else openExpModal('edit', parseInt(b.dataset.i));
+      });
+    });
+    list.querySelectorAll('.stay-del').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(b.dataset.source === 'activity'){
+          const date = b.dataset.date;
+          state.activities[date].splice(parseInt(b.dataset.i), 1);
+          renderActivities(date);
+          writePath('activities/'+date, state.activities[date]);
+        }else{
+          state.expenses.splice(parseInt(b.dataset.i), 1);
+          writePath('expenses', state.expenses);
+        }
+        renderStay();
+      });
+    });
   }
 
-  // 只算自己要付的總金額：共同行程算自己那一份（平分則/2，不平分則兩人各付全額），
-  // 自己的個人行程全額算，對方專屬的行程完全不計入。
+  // 只算自己要付的總金額：共同項目算自己那一份（平分則/2，不平分則兩人各付全額），
+  // 自己的個人項目全額算，對方專屬的項目完全不計入。
   const totalsByCurrency = {};
   myRows.forEach(r=>{
     const cur = r.currency || '¥';
@@ -1625,7 +1841,7 @@ function renderStay(){
           <div><div class="label">${c}・${escapeHtml(meLabel)} 預估花費</div></div>
           <div class="amt">${c}${Math.round(t.mine).toLocaleString()}</div>
         </div>
-        <p class="split-note">${c} 原始金額加總（含共同行程全額）${c}${t.raw.toLocaleString()}</p>
+        <p class="split-note">${c} 原始金額加總（含共同項目全額）${c}${t.raw.toLocaleString()}</p>
       `;
     }).join('');
   }
@@ -1731,13 +1947,21 @@ function renderRepayments(){
   });
 }
 
+function normalizeExpense(item){
+  return Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:''}, item);
+}
+
 function getAllCostRows(){
   const rows = [];
   DAYS_DEF.forEach(day=>{
     const items = (state.activities[day.date] || []).map(normalizeActivity);
-    items.forEach(a=>{
-      if(Number(a.cost) > 0) rows.push(Object.assign({}, a, {date: day.date}));
+    items.forEach((a,i)=>{
+      if(Number(a.cost) > 0) rows.push(Object.assign({}, a, {date: day.date, _source:'activity', _index:i}));
     });
+  });
+  (state.expenses || []).forEach((e,i)=>{
+    const norm = normalizeExpense(e);
+    if(Number(norm.cost) > 0) rows.push(Object.assign({}, norm, {_source:'expense', _index:i}));
   });
   return rows;
 }

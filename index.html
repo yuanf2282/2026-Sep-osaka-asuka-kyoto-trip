@@ -118,7 +118,8 @@ body{
   color:var(--ink-soft);margin:4px 0 -4px;
 }
 .act-who-picker{display:flex;gap:6px;}
-.act-who-btn,.exp-who-btn{
+.act-who-picker[hidden]{display:none;}
+.act-who-btn,.exp-who-btn,.act-costmode-btn,.exp-costmode-btn{
   flex:1;
   font-family:var(--font-body);font-size:13px;font-weight:700;
   padding:9px 8px;border-radius:6px;
@@ -129,6 +130,7 @@ body{
 .act-who-btn[data-who="yuan"].active,.exp-who-btn[data-who="yuan"].active{background:var(--yuan);border-color:var(--yuan);color:#fff;}
 .act-who-btn[data-who="jiyao"].active,.exp-who-btn[data-who="jiyao"].active{background:var(--jiyao);border-color:var(--jiyao);color:#fff;}
 .act-who-btn[data-who="shared"].active,.exp-who-btn[data-who="shared"].active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+.act-costmode-btn.active,.exp-costmode-btn.active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 .act-modal-body .act-form-row{display:flex;gap:8px;}
 .quick-exp-btn{
   display:block;width:100%;margin-bottom:16px;
@@ -736,29 +738,51 @@ h2.section-title{
           <option value="住宿">住宿</option>
           <option value="其他">其他</option>
         </select>
-        <input type="number" class="act-cost" id="actCost" placeholder="費用">
-        <select class="act-currency" id="actCurrency">
-          <option value="¥">¥ 日圓</option>
-          <option value="NT$">NT$ 台幣</option>
-        </select>
       </div>
+
+      <div id="actCostModeRow" class="act-who-picker" hidden>
+        <button type="button" class="act-costmode-btn active" data-mode="single">整體費用</button>
+        <button type="button" class="act-costmode-btn" data-mode="separate">各自金額</button>
+      </div>
+
+      <div id="actSingleCostGroup">
+        <div class="act-form-row">
+          <input type="number" class="act-cost" id="actCost" placeholder="費用">
+          <select class="act-currency" id="actCurrency">
+            <option value="¥">¥ 日圓</option>
+            <option value="NT$">NT$ 台幣</option>
+          </select>
+        </div>
+        <label class="act-checkbox-row" for="actSplitCost">
+          <input type="checkbox" id="actSplitCost">
+          <span>兩人平分這筆費用</span>
+        </label>
+        <div id="actPaidByRow" class="act-paidby-row" hidden>
+          <label class="act-field-label" for="actPaidBy">誰先付的</label>
+          <select id="actPaidBy">
+            <option value="">尚未指定</option>
+            <option value="yuan">Yuan</option>
+            <option value="jiyao">Jiyao</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="actSeparateCostGroup" hidden>
+        <p class="act-field-label" style="margin-top:0;">各自付各的，單純加總記錄，不用分帳</p>
+        <div class="act-form-row">
+          <input type="number" id="actCostYuan" placeholder="Yuan 金額">
+          <input type="number" id="actCostJiyao" placeholder="Jiyao 金額">
+          <select id="actSeparateCurrency">
+            <option value="¥">¥</option>
+            <option value="NT$">NT$</option>
+          </select>
+        </div>
+      </div>
+
       <div class="act-form-row act-time-row">
         <input type="time" class="act-time-start" id="actTimeStart">
         <span class="act-time-sep">~</span>
         <input type="time" class="act-time-end" id="actTimeEnd">
-      </div>
-
-      <label class="act-checkbox-row" for="actSplitCost">
-        <input type="checkbox" id="actSplitCost">
-        <span>兩人平分這筆費用</span>
-      </label>
-      <div id="actPaidByRow" class="act-paidby-row" hidden>
-        <label class="act-field-label" for="actPaidBy">誰先付的</label>
-        <select id="actPaidBy">
-          <option value="">尚未指定</option>
-          <option value="yuan">Yuan</option>
-          <option value="jiyao">Jiyao</option>
-        </select>
       </div>
 
       <label class="act-field-label" for="actAddress">地址</label>
@@ -804,24 +828,45 @@ h2.section-title{
           <option value="住宿">住宿</option>
           <option value="其他">其他</option>
         </select>
-        <input type="number" class="act-cost" id="expCost" placeholder="費用">
-        <select class="act-currency" id="expCurrency">
-          <option value="¥">¥ 日圓</option>
-          <option value="NT$">NT$ 台幣</option>
-        </select>
       </div>
 
-      <label class="act-checkbox-row" for="expSplitCost">
-        <input type="checkbox" id="expSplitCost">
-        <span>兩人平分這筆費用</span>
-      </label>
-      <div id="expPaidByRow" class="act-paidby-row" hidden>
-        <label class="act-field-label" for="expPaidBy">誰先付的</label>
-        <select id="expPaidBy">
-          <option value="">尚未指定</option>
-          <option value="yuan">Yuan</option>
-          <option value="jiyao">Jiyao</option>
-        </select>
+      <div id="expCostModeRow" class="act-who-picker" hidden>
+        <button type="button" class="exp-costmode-btn active" data-mode="single">整體費用</button>
+        <button type="button" class="exp-costmode-btn" data-mode="separate">各自金額</button>
+      </div>
+
+      <div id="expSingleCostGroup">
+        <div class="act-form-row">
+          <input type="number" class="act-cost" id="expCost" placeholder="費用">
+          <select class="act-currency" id="expCurrency">
+            <option value="¥">¥ 日圓</option>
+            <option value="NT$">NT$ 台幣</option>
+          </select>
+        </div>
+        <label class="act-checkbox-row" for="expSplitCost">
+          <input type="checkbox" id="expSplitCost">
+          <span>兩人平分這筆費用</span>
+        </label>
+        <div id="expPaidByRow" class="act-paidby-row" hidden>
+          <label class="act-field-label" for="expPaidBy">誰先付的</label>
+          <select id="expPaidBy">
+            <option value="">尚未指定</option>
+            <option value="yuan">Yuan</option>
+            <option value="jiyao">Jiyao</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="expSeparateCostGroup" hidden>
+        <p class="act-field-label" style="margin-top:0;">各自付各的，單純加總記錄，不用分帳</p>
+        <div class="act-form-row">
+          <input type="number" id="expCostYuan" placeholder="Yuan 金額">
+          <input type="number" id="expCostJiyao" placeholder="Jiyao 金額">
+          <select id="expSeparateCurrency">
+            <option value="¥">¥</option>
+            <option value="NT$">NT$</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="act-form-actions">
@@ -1393,10 +1438,27 @@ function populateDateSelect(){
   sel.dataset.filled = '1';
 }
 
+function setActCostMode(mode){
+  document.querySelectorAll('.act-costmode-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  document.getElementById('actSingleCostGroup').hidden = (mode !== 'single');
+  document.getElementById('actSeparateCostGroup').hidden = (mode !== 'separate');
+}
+function getActCostMode(){
+  const active = document.querySelector('.act-costmode-btn.active');
+  return active ? active.dataset.mode : 'single';
+}
+document.querySelectorAll('.act-costmode-btn').forEach(b=>{
+  b.addEventListener('click', ()=>setActCostMode(b.dataset.mode));
+});
+
 function setActWho(who){
   document.querySelectorAll('.act-who-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.who === who);
   });
+  document.getElementById('actCostModeRow').hidden = (who !== 'shared');
+  if(who !== 'shared') setActCostMode('single'); // 個人行程一定是整體費用，不需要各自金額
   updatePaidByVisibility();
 }
 function getActWho(){
@@ -1425,6 +1487,10 @@ function clearActModalFields(){
   document.getElementById('actCategory').value = '吃喝';
   document.getElementById('actCost').value = '';
   document.getElementById('actCurrency').value = '¥';
+  document.getElementById('actCostYuan').value = '';
+  document.getElementById('actCostJiyao').value = '';
+  document.getElementById('actSeparateCurrency').value = '¥';
+  setActCostMode('single');
   document.getElementById('actTimeStart').value = '';
   document.getElementById('actTimeEnd').value = '';
   document.getElementById('actAddress').value = '';
@@ -1456,7 +1522,11 @@ function openActModal(mode, date, idx){
     document.getElementById('actNotes').value = item.notes || '';
     document.getElementById('actSplitCost').checked = !!item.splitCost;
     document.getElementById('actPaidBy').value = item.paidBy || '';
+    document.getElementById('actCostYuan').value = item.costYuan || '';
+    document.getElementById('actCostJiyao').value = item.costJiyao || '';
+    document.getElementById('actSeparateCurrency').value = item.currency || '¥';
     setActWho(item.who || 'shared');
+    setActCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updatePaidByVisibility();
     document.getElementById('actModalTitle').textContent = '編輯行程';
     document.getElementById('actSubmitBtn').textContent = '更新這個行程';
@@ -1482,24 +1552,47 @@ function saveActivityFromModal(){
   if(!name){ nameEl.focus(); return; }
 
   const who = getActWho();
+  const costMode = (who === 'shared') ? getActCostMode() : 'single';
   const isSplit = document.getElementById('actSplitCost').checked;
   const newDate = document.getElementById('actDateSelect').value;
-  const entry = {
+
+  let costFields;
+  if(costMode === 'separate'){
+    const cYuan = document.getElementById('actCostYuan').value ? parseFloat(document.getElementById('actCostYuan').value) : 0;
+    const cJiyao = document.getElementById('actCostJiyao').value ? parseFloat(document.getElementById('actCostJiyao').value) : 0;
+    costFields = {
+      cost: cYuan + cJiyao, // 合計金額，方便其他地方顯示參考用
+      currency: document.getElementById('actSeparateCurrency').value,
+      costMode: 'separate',
+      costYuan: cYuan,
+      costJiyao: cJiyao,
+      splitCost: false,
+      paidBy: '' // 各自付各的，沒有誰欠誰，不需要分帳
+    };
+  }else{
+    costFields = {
+      cost: document.getElementById('actCost').value ? parseFloat(document.getElementById('actCost').value) : 0,
+      currency: document.getElementById('actCurrency').value,
+      costMode: 'single',
+      costYuan: 0,
+      costJiyao: 0,
+      splitCost: isSplit,
+      // 只有「共同行程」且「需要平分」時，才需要記錄是誰先付款；
+      // 其他情況不需要分帳，一律清空避免殘留舊資料造成混淆。
+      paidBy: (who === 'shared' && isSplit) ? document.getElementById('actPaidBy').value : ''
+    };
+  }
+
+  const entry = Object.assign({
     name,
     category: document.getElementById('actCategory').value,
     address: document.getElementById('actAddress').value.trim(),
     mapUrl: document.getElementById('actMapLink').value.trim(),
-    cost: document.getElementById('actCost').value ? parseFloat(document.getElementById('actCost').value) : 0,
-    currency: document.getElementById('actCurrency').value,
     notes: document.getElementById('actNotes').value.trim(),
     timeStart: document.getElementById('actTimeStart').value,
     timeEnd: document.getElementById('actTimeEnd').value,
-    who: who,
-    splitCost: isSplit,
-    // 只有「共同行程」且「需要平分」時，才需要記錄是誰先付款；
-    // 其他情況不需要分帳，一律清空避免殘留舊資料造成混淆。
-    paidBy: (who === 'shared' && isSplit) ? document.getElementById('actPaidBy').value : ''
-  };
+    who: who
+  }, costFields);
 
   if(actModalState.mode === 'edit'){
     const origDate = actModalState.originalDate;
@@ -1538,10 +1631,27 @@ document.getElementById('actModalCloseBtn').addEventListener('click', closeActMo
 /* ---------------- quick expense (記帳) modal ---------------- */
 let expModalState = { mode:'add', editIndex:null };
 
+function setExpCostMode(mode){
+  document.querySelectorAll('.exp-costmode-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  document.getElementById('expSingleCostGroup').hidden = (mode !== 'single');
+  document.getElementById('expSeparateCostGroup').hidden = (mode !== 'separate');
+}
+function getExpCostMode(){
+  const active = document.querySelector('.exp-costmode-btn.active');
+  return active ? active.dataset.mode : 'single';
+}
+document.querySelectorAll('.exp-costmode-btn').forEach(b=>{
+  b.addEventListener('click', ()=>setExpCostMode(b.dataset.mode));
+});
+
 function setExpWho(who){
   document.querySelectorAll('.exp-who-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.who === who);
   });
+  document.getElementById('expCostModeRow').hidden = (who !== 'shared');
+  if(who !== 'shared') setExpCostMode('single'); // 個人記帳一定是整體費用，不需要各自金額
   updateExpPaidByVisibility();
 }
 function getExpWho(){
@@ -1582,7 +1692,10 @@ function clearExpModalFields(){
   document.getElementById('expCurrency').value = '¥';
   document.getElementById('expSplitCost').checked = false;
   document.getElementById('expPaidBy').value = '';
+  document.getElementById('expCostYuan').value = '';
+  document.getElementById('expCostJiyao').value = '';
   setExpWho('shared');
+  setExpCostMode('single');
 }
 
 function openExpModal(mode, idx){
@@ -1599,7 +1712,10 @@ function openExpModal(mode, idx){
     document.getElementById('expCurrency').value = item.currency || '¥';
     document.getElementById('expSplitCost').checked = !!item.splitCost;
     document.getElementById('expPaidBy').value = item.paidBy || '';
+    document.getElementById('expCostYuan').value = item.costYuan || '';
+    document.getElementById('expCostJiyao').value = item.costJiyao || '';
     setExpWho(item.who || 'shared');
+    setExpCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updateExpPaidByVisibility();
     document.getElementById('expModalTitle').textContent = '編輯記帳';
     document.getElementById('expSubmitBtn').textContent = '更新這筆記帳';
@@ -1625,17 +1741,40 @@ function saveExpenseFromModal(){
   if(!name){ nameEl.focus(); return; }
 
   const who = getExpWho();
+  const costMode = (who === 'shared') ? getExpCostMode() : 'single';
   const isSplit = document.getElementById('expSplitCost').checked;
-  const entry = {
+
+  let costFields;
+  if(costMode === 'separate'){
+    const cYuan = document.getElementById('expCostYuan').value ? parseFloat(document.getElementById('expCostYuan').value) : 0;
+    const cJiyao = document.getElementById('expCostJiyao').value ? parseFloat(document.getElementById('expCostJiyao').value) : 0;
+    costFields = {
+      cost: cYuan + cJiyao, // 合計金額，方便其他地方顯示參考用
+      currency: document.getElementById('expSeparateCurrency').value,
+      costMode: 'separate',
+      costYuan: cYuan,
+      costJiyao: cJiyao,
+      splitCost: false,
+      paidBy: ''
+    };
+  }else{
+    costFields = {
+      cost: document.getElementById('expCost').value ? parseFloat(document.getElementById('expCost').value) : 0,
+      currency: document.getElementById('expCurrency').value,
+      costMode: 'single',
+      costYuan: 0,
+      costJiyao: 0,
+      splitCost: isSplit,
+      paidBy: (who === 'shared' && isSplit) ? document.getElementById('expPaidBy').value : ''
+    };
+  }
+
+  const entry = Object.assign({
     name,
     category: document.getElementById('expCategory').value,
-    cost: document.getElementById('expCost').value ? parseFloat(document.getElementById('expCost').value) : 0,
-    currency: document.getElementById('expCurrency').value,
     who: who,
-    splitCost: isSplit,
-    paidBy: (who === 'shared' && isSplit) ? document.getElementById('expPaidBy').value : '',
     date: document.getElementById('expDateSelect').value
-  };
+  }, costFields);
 
   if(!state.expenses) state.expenses = [];
   if(expModalState.mode === 'edit'){
@@ -1660,8 +1799,8 @@ const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':
 
 function normalizeActivity(item){
   // supports legacy plain-string activities from before this feature existed
-  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', splitCost:false, paidBy:''};
-  const base = Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', paidBy:''}, item);
+  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', splitCost:false, paidBy:'', costMode:'single', costYuan:0, costJiyao:0};
+  const base = Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', paidBy:'', costMode:'single', costYuan:0, costJiyao:0}, item);
   if(typeof base.splitCost !== 'boolean') base.splitCost = defaultSplitCost(base.category);
   return base;
 }
@@ -1712,13 +1851,19 @@ function renderActivities(date){
     }else if(mapHref){
       metaHtml += `<a href="${escapeHtml(mapHref)}" target="_blank" rel="noopener">Google 地圖</a>`;
     }
-    if(a.cost){
-      metaHtml += `<span class="activity-cost">${escapeHtml(a.currency||'¥')}${Number(a.cost).toLocaleString()}</span>`;
-    }
-    if(a.who === 'shared' && a.splitCost){
-      metaHtml += a.paidBy
-        ? `<span class="activity-split-note">${escapeHtml(whoLabel(a.paidBy))} 先付・平分</span>`
-        : `<span class="activity-split-note">兩人平分・尚未指定先付款人</span>`;
+    if(a.costMode === 'separate' && (Number(a.costYuan) > 0 || Number(a.costJiyao) > 0)){
+      const cur = escapeHtml(a.currency||'¥');
+      metaHtml += `<span class="activity-cost">${cur}${Number(a.costYuan||0).toLocaleString()}（Yuan）・${cur}${Number(a.costJiyao||0).toLocaleString()}（Jiyao）</span>`;
+      metaHtml += `<span class="activity-split-note">各自結帳・不分帳</span>`;
+    }else{
+      if(a.cost){
+        metaHtml += `<span class="activity-cost">${escapeHtml(a.currency||'¥')}${Number(a.cost).toLocaleString()}</span>`;
+      }
+      if(a.who === 'shared' && a.splitCost){
+        metaHtml += a.paidBy
+          ? `<span class="activity-split-note">${escapeHtml(whoLabel(a.paidBy))} 先付・平分</span>`
+          : `<span class="activity-split-note">兩人平分・尚未指定先付款人</span>`;
+      }
     }
     return `
     <div class="act-row owner-${a.who||'shared'}">
@@ -1768,7 +1913,9 @@ function renderStay(){
       const cur = r.currency || '¥';
       const who = r.who || 'shared';
       let metaText;
-      if(who === 'shared'){
+      if(r._fromSeparate){
+        metaText = `共同項目，各自結帳・這是 ${escapeHtml(whoLabel(who))} 的部分`;
+      }else if(who === 'shared'){
         const perPerson = r.splitCost ? (Number(r.cost)/2) : Number(r.cost);
         metaText = r.splitCost
           ? `共同項目，兩人平分，一人份 ${escapeHtml(cur)}${Math.round(perPerson).toLocaleString()}`
@@ -1955,20 +2102,34 @@ function renderRepayments(){
 }
 
 function normalizeExpense(item){
-  return Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:''}, item);
+  return Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:'', costMode:'single', costYuan:0, costJiyao:0}, item);
 }
 
 function getAllCostRows(){
   const rows = [];
+  function pushRow(norm, extra){
+    if(norm.costMode === 'separate'){
+      // 各自付款：拆成兩筆各自的花費，不能算成一筆共同花費，
+      // 不然總覽會把「Yuan+Jiyao 的合計」重複算進兩人各自的總額裡。
+      if(Number(norm.costYuan) > 0){
+        rows.push(Object.assign({}, norm, extra, {who:'yuan', cost:Number(norm.costYuan), splitCost:false, paidBy:'', _fromSeparate:true}));
+      }
+      if(Number(norm.costJiyao) > 0){
+        rows.push(Object.assign({}, norm, extra, {who:'jiyao', cost:Number(norm.costJiyao), splitCost:false, paidBy:'', _fromSeparate:true}));
+      }
+    }else if(Number(norm.cost) > 0){
+      rows.push(Object.assign({}, norm, extra));
+    }
+  }
   DAYS_DEF.forEach(day=>{
     const items = (state.activities[day.date] || []).map(normalizeActivity);
     items.forEach((a,i)=>{
-      if(Number(a.cost) > 0) rows.push(Object.assign({}, a, {date: day.date, _source:'activity', _index:i}));
+      pushRow(a, {date: day.date, _source:'activity', _index:i});
     });
   });
   (state.expenses || []).forEach((e,i)=>{
     const norm = normalizeExpense(e);
-    if(Number(norm.cost) > 0) rows.push(Object.assign({}, norm, {_source:'expense', _index:i}));
+    pushRow(norm, {_source:'expense', _index:i});
   });
   return rows;
 }

@@ -768,7 +768,7 @@ h2.section-title{
       </div>
 
       <div id="actSeparateCostGroup" hidden>
-        <p class="act-field-label" style="margin-top:0;">各自付各的，單純加總記錄，不用分帳</p>
+        <p class="act-field-label" style="margin-top:0;">各自付各的，單純加總記錄</p>
         <div class="act-form-row">
           <input type="number" id="actCostYuan" placeholder="Yuan 金額">
           <input type="number" id="actCostJiyao" placeholder="Jiyao 金額">
@@ -777,6 +777,12 @@ h2.section-title{
             <option value="NT$">NT$</option>
           </select>
         </div>
+        <label class="act-field-label" for="actSeparatePaidBy">如果有人先幫忙代墊全部（沒有的話留空）</label>
+        <select id="actSeparatePaidBy">
+          <option value="">沒有人代墊，各自現場付清</option>
+          <option value="yuan">Yuan 先代墊了全部</option>
+          <option value="jiyao">Jiyao 先代墊了全部</option>
+        </select>
       </div>
 
       <div class="act-form-row act-time-row">
@@ -858,7 +864,7 @@ h2.section-title{
       </div>
 
       <div id="expSeparateCostGroup" hidden>
-        <p class="act-field-label" style="margin-top:0;">各自付各的，單純加總記錄，不用分帳</p>
+        <p class="act-field-label" style="margin-top:0;">各自付各的，單純加總記錄</p>
         <div class="act-form-row">
           <input type="number" id="expCostYuan" placeholder="Yuan 金額">
           <input type="number" id="expCostJiyao" placeholder="Jiyao 金額">
@@ -867,6 +873,12 @@ h2.section-title{
             <option value="NT$">NT$</option>
           </select>
         </div>
+        <label class="act-field-label" for="expSeparatePaidBy">如果有人先幫忙代墊全部（沒有的話留空）</label>
+        <select id="expSeparatePaidBy">
+          <option value="">沒有人代墊，各自現場付清</option>
+          <option value="yuan">Yuan 先代墊了全部</option>
+          <option value="jiyao">Jiyao 先代墊了全部</option>
+        </select>
       </div>
     </div>
     <div class="act-form-actions">
@@ -1498,6 +1510,7 @@ function clearActModalFields(){
   document.getElementById('actNotes').value = '';
   document.getElementById('actSplitCost').checked = false;
   document.getElementById('actPaidBy').value = '';
+  document.getElementById('actSeparatePaidBy').value = '';
   setActWho('shared');
 }
 
@@ -1521,10 +1534,11 @@ function openActModal(mode, date, idx){
     document.getElementById('actMapLink').value = item.mapUrl || '';
     document.getElementById('actNotes').value = item.notes || '';
     document.getElementById('actSplitCost').checked = !!item.splitCost;
-    document.getElementById('actPaidBy').value = item.paidBy || '';
+    document.getElementById('actPaidBy').value = (item.costMode !== 'separate') ? (item.paidBy || '') : '';
     document.getElementById('actCostYuan').value = item.costYuan || '';
     document.getElementById('actCostJiyao').value = item.costJiyao || '';
     document.getElementById('actSeparateCurrency').value = item.currency || '¥';
+    document.getElementById('actSeparatePaidBy').value = (item.costMode === 'separate') ? (item.paidBy || '') : '';
     setActWho(item.who || 'shared');
     setActCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updatePaidByVisibility();
@@ -1567,7 +1581,9 @@ function saveActivityFromModal(){
       costYuan: cYuan,
       costJiyao: cJiyao,
       splitCost: false,
-      paidBy: '' // 各自付各的，沒有誰欠誰，不需要分帳
+      // 各自付各的：預設沒有誰欠誰；但如果有一方先代墊了全部，
+      // 這裡記錄代墊的人，分帳時只算「沒代墊那方自己的那份」欠代墊者。
+      paidBy: document.getElementById('actSeparatePaidBy').value
     };
   }else{
     costFields = {
@@ -1694,6 +1710,7 @@ function clearExpModalFields(){
   document.getElementById('expPaidBy').value = '';
   document.getElementById('expCostYuan').value = '';
   document.getElementById('expCostJiyao').value = '';
+  document.getElementById('expSeparatePaidBy').value = '';
   setExpWho('shared');
   setExpCostMode('single');
 }
@@ -1711,9 +1728,11 @@ function openExpModal(mode, idx){
     document.getElementById('expCost').value = item.cost || '';
     document.getElementById('expCurrency').value = item.currency || '¥';
     document.getElementById('expSplitCost').checked = !!item.splitCost;
-    document.getElementById('expPaidBy').value = item.paidBy || '';
+    document.getElementById('expPaidBy').value = (item.costMode !== 'separate') ? (item.paidBy || '') : '';
     document.getElementById('expCostYuan').value = item.costYuan || '';
     document.getElementById('expCostJiyao').value = item.costJiyao || '';
+    document.getElementById('expSeparateCurrency').value = item.currency || '¥';
+    document.getElementById('expSeparatePaidBy').value = (item.costMode === 'separate') ? (item.paidBy || '') : '';
     setExpWho(item.who || 'shared');
     setExpCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updateExpPaidByVisibility();
@@ -1755,7 +1774,7 @@ function saveExpenseFromModal(){
       costYuan: cYuan,
       costJiyao: cJiyao,
       splitCost: false,
-      paidBy: ''
+      paidBy: document.getElementById('expSeparatePaidBy').value
     };
   }else{
     costFields = {
@@ -2000,24 +2019,53 @@ function renderStay(){
     }).join('');
   }
 
-  renderSettle(rows);
+  renderSettle();
 }
 
 /* ---------------- settle up (分帳) ---------------- */
-function renderSettle(rows){
+function getSettleEntries(){
+  // 掃描「原始」項目（不是拆分過的顯示用 virtual rows），
+  // 統一算出誰欠誰多少：
+  //  - 單一金額模式：共同＋有勾平分＋有指定先付款人 → 欠款 = 總額的一半
+  //  - 各自金額模式：共同＋有指定先代墊全部的人 → 欠款 = 沒代墊那方自己的那份金額（不是一半）
+  const entries = [];
+  function check(norm, extra){
+    if((norm.who || 'shared') !== 'shared') return;
+    if(norm.costMode === 'separate'){
+      if(norm.paidBy === 'yuan' && Number(norm.costJiyao) > 0){
+        entries.push(Object.assign({}, norm, extra, {debtor:'jiyao', creditor:'yuan', amount:Number(norm.costJiyao)}));
+      }else if(norm.paidBy === 'jiyao' && Number(norm.costYuan) > 0){
+        entries.push(Object.assign({}, norm, extra, {debtor:'yuan', creditor:'jiyao', amount:Number(norm.costYuan)}));
+      }
+      // paidBy 留空 → 各自現場付清，沒有欠款
+    }else if(norm.splitCost && (norm.paidBy === 'yuan' || norm.paidBy === 'jiyao') && Number(norm.cost) > 0){
+      const debtor = norm.paidBy === 'yuan' ? 'jiyao' : 'yuan';
+      entries.push(Object.assign({}, norm, extra, {debtor, creditor:norm.paidBy, amount:Number(norm.cost)/2}));
+    }
+  }
+  DAYS_DEF.forEach(day=>{
+    (state.activities[day.date] || []).map(normalizeActivity).forEach((a,i)=>{
+      check(a, {date: day.date, _source:'activity', _index:i});
+    });
+  });
+  (state.expenses || []).forEach((e,i)=>{
+    check(normalizeExpense(e), {_source:'expense', _index:i});
+  });
+  return entries;
+}
+
+function renderSettle(){
   const el = document.getElementById('settleList');
   if(!el) return;
 
-  // 只有「共同・需要平分・且有指定先付款人」的項目才需要分帳
-  const settleRows = rows.filter(r => (r.who || 'shared') === 'shared' && r.splitCost && (r.paidBy === 'yuan' || r.paidBy === 'jiyao'));
+  const settleRows = getSettleEntries();
 
   const byCurrency = {};
   settleRows.forEach(r=>{
     const cur = r.currency || '¥';
     if(!byCurrency[cur]) byCurrency[cur] = { items: [], net: 0 };
-    const half = Number(r.cost) / 2;
     // net > 0 代表 Jiyao 欠 Yuan；net < 0 代表 Yuan 欠 Jiyao
-    byCurrency[cur].net += (r.paidBy === 'yuan') ? half : -half;
+    byCurrency[cur].net += (r.creditor === 'yuan') ? r.amount : -r.amount;
     byCurrency[cur].items.push(r);
   });
 
@@ -2049,9 +2097,12 @@ function renderSettle(rows){
 
       const itemsHtml = info.items.map(r=>{
         const d = new Date(r.date+'T00:00:00');
-        const half = Math.round(Number(r.cost)/2);
-        const payer = r.paidBy === 'yuan' ? 'Yuan' : 'Jiyao';
-        const ower = r.paidBy === 'yuan' ? 'Jiyao' : 'Yuan';
+        const payer = whoLabel(r.creditor);
+        const ower = whoLabel(r.debtor);
+        const owedAmt = Math.round(r.amount);
+        const modeNote = r.costMode === 'separate'
+          ? `${escapeHtml(payer)} 先代墊了全部，${escapeHtml(ower)} 欠自己那份 ${c}${owedAmt.toLocaleString()}`
+          : `${escapeHtml(payer)} 先付了全額，${escapeHtml(ower)} 欠 ${escapeHtml(payer)} 一半 ${c}${owedAmt.toLocaleString()}`;
         return `
           <div class="stay-item">
             <div class="stay-top">
@@ -2059,7 +2110,7 @@ function renderSettle(rows){
               <div class="stay-name">${escapeHtml(r.name)}</div>
               <span class="stay-amt">${c}${Number(r.cost).toLocaleString()}</span>
             </div>
-            <div class="stay-meta">${escapeHtml(payer)} 先付了全額，${escapeHtml(ower)} 欠 ${escapeHtml(payer)} ${c}${half.toLocaleString()}</div>
+            <div class="stay-meta">${modeNote}</div>
           </div>
         `;
       }).join('');
@@ -2096,7 +2147,7 @@ function renderRepayments(){
     b.addEventListener('click', ()=>{
       state.repayments.splice(parseInt(b.dataset.i),1);
       writePath('repayments', state.repayments);
-      renderSettle(getAllCostRows());
+      renderSettle();
     });
   });
 }
@@ -2146,7 +2197,7 @@ document.getElementById('repayAddBtn').addEventListener('click', ()=>{
   });
   amountEl.value = '';
   writePath('repayments', state.repayments);
-  renderSettle(getAllCostRows());
+  renderSettle();
 });
 
 document.querySelectorAll('[data-stay-view]').forEach(btn=>{

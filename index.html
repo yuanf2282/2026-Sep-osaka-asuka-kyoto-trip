@@ -26,6 +26,8 @@
   --vermillion-light:#d6b6ae;
   --yuan:#55747d;
   --jiyao:#8a6c82;
+  --transport:#5d7a92;
+  --shopping:#a8738c;
   --font-display:'Noto Serif TC', serif;
   --font-body:'Noto Sans TC', sans-serif;
   --font-mono:'JetBrains Mono', monospace;
@@ -399,6 +401,8 @@ body{
 }
 .act-tag.cat-eat{background:var(--vermillion);}
 .act-tag.cat-sight{background:var(--gold);}
+.act-tag.cat-transport{background:var(--transport);}
+.act-tag.cat-shopping{background:var(--shopping);}
 .act-tag.cat-stay{background:var(--moss);}
 .act-tag.cat-other{background:var(--ink-soft);}
 .activity-time{font-family:var(--font-body);font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-top:4px;}
@@ -494,6 +498,7 @@ button.btn:active{opacity:.8;}
 .stay-amt{font-family:var(--font-mono);font-weight:700;color:var(--ink);flex:0 0 auto;}
 .stay-meta{margin-top:4px;font-size:12.5px;color:var(--ink-soft);}
 .stay-meta a{color:var(--ink-soft);}
+.stay-notes{margin-top:4px;font-size:12px;color:var(--ink-soft);font-style:italic;white-space:pre-wrap;word-break:break-word;}
 .stay-source-tag{
   flex:0 0 auto;font-family:var(--font-body);font-size:9px;font-weight:700;
   padding:2px 7px;border-radius:20px;
@@ -735,6 +740,8 @@ h2.section-title{
         <select class="act-category" id="actCategory">
           <option value="吃喝">吃喝</option>
           <option value="景點">景點</option>
+          <option value="交通">交通</option>
+          <option value="逛街">逛街</option>
           <option value="住宿">住宿</option>
           <option value="其他">其他</option>
         </select>
@@ -831,10 +838,23 @@ h2.section-title{
         <select class="act-category" id="expCategory">
           <option value="吃喝">吃喝</option>
           <option value="景點">景點</option>
+          <option value="交通">交通</option>
+          <option value="逛街">逛街</option>
           <option value="住宿">住宿</option>
           <option value="其他">其他</option>
         </select>
       </div>
+
+      <label class="act-field-label" for="expPaymentMethod">付款方式</label>
+      <select id="expPaymentMethod">
+        <option value="">未指定</option>
+        <option value="現金">現金</option>
+        <option value="信用卡">信用卡</option>
+        <option value="其他">其他</option>
+      </select>
+
+      <label class="act-field-label" for="expNotes">備註</label>
+      <textarea class="act-notes" id="expNotes" placeholder="其他想記的小事"></textarea>
 
       <div id="expCostModeRow" class="act-who-picker" hidden>
         <button type="button" class="exp-costmode-btn active" data-mode="single">整體費用</button>
@@ -1711,6 +1731,8 @@ function clearExpModalFields(){
   document.getElementById('expCostYuan').value = '';
   document.getElementById('expCostJiyao').value = '';
   document.getElementById('expSeparatePaidBy').value = '';
+  document.getElementById('expPaymentMethod').value = '';
+  document.getElementById('expNotes').value = '';
   setExpWho('shared');
   setExpCostMode('single');
 }
@@ -1733,6 +1755,8 @@ function openExpModal(mode, idx){
     document.getElementById('expCostJiyao').value = item.costJiyao || '';
     document.getElementById('expSeparateCurrency').value = item.currency || '¥';
     document.getElementById('expSeparatePaidBy').value = (item.costMode === 'separate') ? (item.paidBy || '') : '';
+    document.getElementById('expPaymentMethod').value = item.paymentMethod || '';
+    document.getElementById('expNotes').value = item.notes || '';
     setExpWho(item.who || 'shared');
     setExpCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updateExpPaidByVisibility();
@@ -1792,7 +1816,9 @@ function saveExpenseFromModal(){
     name,
     category: document.getElementById('expCategory').value,
     who: who,
-    date: document.getElementById('expDateSelect').value
+    date: document.getElementById('expDateSelect').value,
+    paymentMethod: document.getElementById('expPaymentMethod').value,
+    notes: document.getElementById('expNotes').value.trim()
   }, costFields);
 
   if(!state.expenses) state.expenses = [];
@@ -1813,8 +1839,8 @@ document.getElementById('expCancelBtn').addEventListener('click', closeExpModal)
 document.getElementById('expModalCloseBtn').addEventListener('click', closeExpModal);
 // same deliberate choice as the itinerary modal: no backdrop-click-to-close.
 
-const CAT_CLASS = {'吃喝':'cat-eat','景點':'cat-sight','觀光':'cat-sight','住宿':'cat-stay','其他':'cat-other'};
-const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':'var(--gold)','住宿':'var(--moss)','其他':'var(--ink-soft)'};
+const CAT_CLASS = {'吃喝':'cat-eat','景點':'cat-sight','觀光':'cat-sight','交通':'cat-transport','逛街':'cat-shopping','住宿':'cat-stay','其他':'cat-other'};
+const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':'var(--gold)','交通':'var(--transport)','逛街':'var(--shopping)','住宿':'var(--moss)','其他':'var(--ink-soft)'};
 
 function normalizeActivity(item){
   // supports legacy plain-string activities from before this feature existed
@@ -1956,9 +1982,11 @@ function renderStay(){
           </div>
           <div class="stay-meta">
             ${metaText}
+            ${r.paymentMethod ? ' · ' + escapeHtml(r.paymentMethod) : ''}
             ${r.address ? ' · ' + escapeHtml(r.address) : ''}
             ${r.mapUrl ? ` · <a href="${escapeHtml(r.mapUrl)}" target="_blank" rel="noopener">Google 地圖</a>` : ''}
           </div>
+          ${r.notes ? `<div class="stay-notes">${linkifyNotes(r.notes)}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -2153,7 +2181,7 @@ function renderRepayments(){
 }
 
 function normalizeExpense(item){
-  return Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:'', costMode:'single', costYuan:0, costJiyao:0}, item);
+  return Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:'', costMode:'single', costYuan:0, costJiyao:0, paymentMethod:'', notes:''}, item);
 }
 
 function getAllCostRows(){

@@ -152,6 +152,19 @@ body{
   font-family:var(--font-body);font-size:13.5px;color:var(--ink);
   cursor:pointer;margin-top:4px;
 }
+.act-dual-currency-note{font-size:11px;color:var(--ink-soft);margin:2px 0 4px;line-height:1.5;}
+.act-receipt-input{font-size:13px;}
+.act-receipt-preview{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.act-receipt-preview img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--paper-line);}
+.act-receipt-remove{
+  font-family:var(--font-body);font-size:12px;color:var(--vermillion);
+  background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;
+}
+.receipt-thumb{
+  display:inline-block;width:34px;height:34px;flex:0 0 auto;
+  border-radius:5px;overflow:hidden;border:1px solid var(--paper-line);
+}
+.receipt-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .act-checkbox-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--vermillion);}
 .act-paidby-row{display:flex;flex-direction:column;gap:6px;}
 .act-paidby-row[hidden]{display:none;}
@@ -754,12 +767,10 @@ h2.section-title{
 
       <div id="actSingleCostGroup">
         <div class="act-form-row">
-          <input type="number" class="act-cost" id="actCost" placeholder="費用">
-          <select class="act-currency" id="actCurrency">
-            <option value="¥">¥ 日圓</option>
-            <option value="NT$">NT$ 台幣</option>
-          </select>
+          <input type="number" class="act-cost" id="actCostJPY" placeholder="日圓 ¥">
+          <input type="number" class="act-cost" id="actCostTWD" placeholder="台幣 NT$">
         </div>
+        <p class="act-dual-currency-note">兩個都填的話，分帳以台幣為準（刷卡日圓先扣、台幣還沒出帳時可以兩個都記）</p>
         <label class="act-checkbox-row" for="actSplitCost">
           <input type="checkbox" id="actSplitCost">
           <span>兩人平分這筆費用</span>
@@ -804,6 +815,13 @@ h2.section-title{
       <input type="url" class="act-maplink" id="actMapLink" placeholder="Google Maps 連結">
       <label class="act-field-label" for="actNotes">行程備註</label>
       <textarea class="act-notes" id="actNotes" placeholder="行程備註"></textarea>
+
+      <label class="act-field-label" for="actReceiptInput">收據照片（選填）</label>
+      <input type="file" accept="image/*" id="actReceiptInput" class="act-receipt-input">
+      <div id="actReceiptPreview" class="act-receipt-preview" hidden>
+        <img id="actReceiptImg" src="" alt="收據預覽">
+        <button type="button" id="actReceiptRemoveBtn" class="act-receipt-remove">移除照片</button>
+      </div>
     </div>
     <div class="act-form-actions">
       <button class="btn act-submit" id="actSubmitBtn" type="button">新增這個行程</button>
@@ -856,6 +874,13 @@ h2.section-title{
       <label class="act-field-label" for="expNotes">備註</label>
       <textarea class="act-notes" id="expNotes" placeholder="其他想記的小事"></textarea>
 
+      <label class="act-field-label" for="expReceiptInput">收據照片（選填）</label>
+      <input type="file" accept="image/*" id="expReceiptInput" class="act-receipt-input">
+      <div id="expReceiptPreview" class="act-receipt-preview" hidden>
+        <img id="expReceiptImg" src="" alt="收據預覽">
+        <button type="button" id="expReceiptRemoveBtn" class="act-receipt-remove">移除照片</button>
+      </div>
+
       <div id="expCostModeRow" class="act-who-picker" hidden>
         <button type="button" class="exp-costmode-btn active" data-mode="single">整體費用</button>
         <button type="button" class="exp-costmode-btn" data-mode="separate">各自金額</button>
@@ -863,12 +888,10 @@ h2.section-title{
 
       <div id="expSingleCostGroup">
         <div class="act-form-row">
-          <input type="number" class="act-cost" id="expCost" placeholder="費用">
-          <select class="act-currency" id="expCurrency">
-            <option value="¥">¥ 日圓</option>
-            <option value="NT$">NT$ 台幣</option>
-          </select>
+          <input type="number" class="act-cost" id="expCostJPY" placeholder="日圓 ¥">
+          <input type="number" class="act-cost" id="expCostTWD" placeholder="台幣 NT$">
         </div>
+        <p class="act-dual-currency-note">兩個都填的話，分帳以台幣為準（刷卡日圓先扣、台幣還沒出帳時可以兩個都記）</p>
         <label class="act-checkbox-row" for="expSplitCost">
           <input type="checkbox" id="expSplitCost">
           <span>兩人平分這筆費用</span>
@@ -1517,8 +1540,8 @@ document.getElementById('actCategory').addEventListener('change', ()=>{
 function clearActModalFields(){
   document.getElementById('actName').value = '';
   document.getElementById('actCategory').value = '吃喝';
-  document.getElementById('actCost').value = '';
-  document.getElementById('actCurrency').value = '¥';
+  document.getElementById('actCostJPY').value = '';
+  document.getElementById('actCostTWD').value = '';
   document.getElementById('actCostYuan').value = '';
   document.getElementById('actCostJiyao').value = '';
   document.getElementById('actSeparateCurrency').value = '¥';
@@ -1546,8 +1569,8 @@ function openActModal(mode, date, idx){
     const item = normalizeActivity(state.activities[date][idx]);
     document.getElementById('actName').value = item.name;
     document.getElementById('actCategory').value = item.category;
-    document.getElementById('actCost').value = item.cost || '';
-    document.getElementById('actCurrency').value = item.currency || '¥';
+    document.getElementById('actCostJPY').value = item.costJPY || '';
+    document.getElementById('actCostTWD').value = item.costTWD || '';
     document.getElementById('actTimeStart').value = item.timeStart || '';
     document.getElementById('actTimeEnd').value = item.timeEnd || '';
     document.getElementById('actAddress').value = item.address || '';
@@ -1606,9 +1629,14 @@ function saveActivityFromModal(){
       paidBy: document.getElementById('actSeparatePaidBy').value
     };
   }else{
+    const cJPY = document.getElementById('actCostJPY').value ? parseFloat(document.getElementById('actCostJPY').value) : 0;
+    const cTWD = document.getElementById('actCostTWD').value ? parseFloat(document.getElementById('actCostTWD').value) : 0;
     costFields = {
-      cost: document.getElementById('actCost').value ? parseFloat(document.getElementById('actCost').value) : 0,
-      currency: document.getElementById('actCurrency').value,
+      costJPY: cJPY,
+      costTWD: cTWD,
+      // cost/currency 由 resolveDualCurrency 依「兩個都填看台幣、只填日圓看日圓」的規則決定
+      cost: cTWD > 0 ? cTWD : cJPY,
+      currency: cTWD > 0 ? 'NT$' : '¥',
       costMode: 'single',
       costYuan: 0,
       costJiyao: 0,
@@ -1724,8 +1752,8 @@ function populateExpDateSelect(){
 function clearExpModalFields(){
   document.getElementById('expName').value = '';
   document.getElementById('expCategory').value = '吃喝';
-  document.getElementById('expCost').value = '';
-  document.getElementById('expCurrency').value = '¥';
+  document.getElementById('expCostJPY').value = '';
+  document.getElementById('expCostTWD').value = '';
   document.getElementById('expSplitCost').checked = false;
   document.getElementById('expPaidBy').value = '';
   document.getElementById('expCostYuan').value = '';
@@ -1747,8 +1775,8 @@ function openExpModal(mode, idx){
     document.getElementById('expDateSelect').value = item.date || DAYS_DEF[0].date;
     document.getElementById('expName').value = item.name;
     document.getElementById('expCategory').value = item.category;
-    document.getElementById('expCost').value = item.cost || '';
-    document.getElementById('expCurrency').value = item.currency || '¥';
+    document.getElementById('expCostJPY').value = item.costJPY || '';
+    document.getElementById('expCostTWD').value = item.costTWD || '';
     document.getElementById('expSplitCost').checked = !!item.splitCost;
     document.getElementById('expPaidBy').value = (item.costMode !== 'separate') ? (item.paidBy || '') : '';
     document.getElementById('expCostYuan').value = item.costYuan || '';
@@ -1801,9 +1829,13 @@ function saveExpenseFromModal(){
       paidBy: document.getElementById('expSeparatePaidBy').value
     };
   }else{
+    const cJPY = document.getElementById('expCostJPY').value ? parseFloat(document.getElementById('expCostJPY').value) : 0;
+    const cTWD = document.getElementById('expCostTWD').value ? parseFloat(document.getElementById('expCostTWD').value) : 0;
     costFields = {
-      cost: document.getElementById('expCost').value ? parseFloat(document.getElementById('expCost').value) : 0,
-      currency: document.getElementById('expCurrency').value,
+      costJPY: cJPY,
+      costTWD: cTWD,
+      cost: cTWD > 0 ? cTWD : cJPY,
+      currency: cTWD > 0 ? 'NT$' : '¥',
       costMode: 'single',
       costYuan: 0,
       costJiyao: 0,
@@ -1844,10 +1876,37 @@ const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':
 
 function normalizeActivity(item){
   // supports legacy plain-string activities from before this feature existed
-  if(typeof item === 'string') return {name:item, category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', splitCost:false, paidBy:'', costMode:'single', costYuan:0, costJiyao:0};
-  const base = Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', paidBy:'', costMode:'single', costYuan:0, costJiyao:0}, item);
+  if(typeof item === 'string') return normalizeActivity({name:item});
+  const base = Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', paidBy:'', costMode:'single', costYuan:0, costJiyao:0, receiptImage:''}, item);
   if(typeof base.splitCost !== 'boolean') base.splitCost = defaultSplitCost(base.category);
+  resolveDualCurrency(base);
   return base;
+}
+
+// 支援同時填日圓／台幣：兩個都填時分帳以台幣為準；只填日圓就先用日圓記帳。
+// 舊資料只有 cost+currency 沒有 costJPY/costTWD 時，自動換算成新格式，向下相容。
+function resolveDualCurrency(base){
+  if(base.costJPY === undefined || base.costTWD === undefined){
+    if(base.currency === 'NT$'){
+      base.costTWD = Number(base.cost) || 0;
+      base.costJPY = 0;
+    }else{
+      base.costJPY = Number(base.cost) || 0;
+      base.costTWD = 0;
+    }
+  }
+  base.costJPY = Number(base.costJPY) || 0;
+  base.costTWD = Number(base.costTWD) || 0;
+  // 「各自金額」模式的 cost/currency 是由 costYuan+costJiyao 決定，不受雙幣別影響。
+  if(base.costMode !== 'separate'){
+    if(base.costTWD > 0){
+      base.cost = base.costTWD;
+      base.currency = 'NT$';
+    }else{
+      base.cost = base.costJPY;
+      base.currency = '¥';
+    }
+  }
 }
 
 function defaultSplitCost(category){
@@ -1902,7 +1961,12 @@ function renderActivities(date){
       metaHtml += `<span class="activity-split-note">各自結帳・不分帳</span>`;
     }else{
       if(a.cost){
+        const bothFilled = Number(a.costJPY) > 0 && Number(a.costTWD) > 0;
         metaHtml += `<span class="activity-cost">${escapeHtml(a.currency||'¥')}${Number(a.cost).toLocaleString()}</span>`;
+        if(bothFilled){
+          const otherLabel = a.currency === 'NT$' ? ('¥'+Number(a.costJPY).toLocaleString()) : ('NT$'+Number(a.costTWD).toLocaleString());
+          metaHtml += `<span class="activity-split-note">另記 ${escapeHtml(otherLabel)}・分帳以${escapeHtml(a.currency)}為準</span>`;
+        }
       }
       if(a.who === 'shared' && a.splitCost){
         metaHtml += a.paidBy
@@ -1982,6 +2046,7 @@ function renderStay(){
           </div>
           <div class="stay-meta">
             ${metaText}
+            ${(Number(r.costJPY)>0 && Number(r.costTWD)>0) ? ' · 另記 ' + escapeHtml(r.currency==='NT$' ? ('¥'+Number(r.costJPY).toLocaleString()) : ('NT$'+Number(r.costTWD).toLocaleString())) : ''}
             ${r.paymentMethod ? ' · ' + escapeHtml(r.paymentMethod) : ''}
             ${r.address ? ' · ' + escapeHtml(r.address) : ''}
             ${r.mapUrl ? ` · <a href="${escapeHtml(r.mapUrl)}" target="_blank" rel="noopener">Google 地圖</a>` : ''}
@@ -2181,7 +2246,9 @@ function renderRepayments(){
 }
 
 function normalizeExpense(item){
-  return Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:'', costMode:'single', costYuan:0, costJiyao:0, paymentMethod:'', notes:''}, item);
+  const base = Object.assign({name:'', category:'其他', cost:0, currency:'¥', who:'shared', splitCost:false, paidBy:'', date:'', costMode:'single', costYuan:0, costJiyao:0, paymentMethod:'', notes:'', receiptImage:''}, item);
+  resolveDualCurrency(base);
+  return base;
 }
 
 function getAllCostRows(){
@@ -2359,6 +2426,66 @@ function escapeHtml(str){
   d.textContent = str;
   return d.innerHTML;
 }
+
+// resize + JPEG-compress an uploaded image client-side, returning a base64 data URL
+// (kept small so it can live directly inside the existing Firebase Realtime Database record)
+function compressImageToDataURL(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>reject(new Error('圖片讀取失敗'));
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=>reject(new Error('檔案讀取失敗'));
+    reader.readAsDataURL(file);
+  });
+}
+
+let actReceiptData = '';
+document.getElementById('actReceiptInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    actReceiptData = await compressImageToDataURL(file, 1000, 0.65);
+    document.getElementById('actReceiptImg').src = actReceiptData;
+    document.getElementById('actReceiptPreview').hidden = false;
+  }catch(err){
+    showToast('圖片處理失敗，換一張試試', true);
+  }
+});
+document.getElementById('actReceiptRemoveBtn').addEventListener('click', ()=>{
+  actReceiptData = '';
+  document.getElementById('actReceiptInput').value = '';
+  document.getElementById('actReceiptPreview').hidden = true;
+});
+
+let expReceiptData = '';
+document.getElementById('expReceiptInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    expReceiptData = await compressImageToDataURL(file, 1000, 0.65);
+    document.getElementById('expReceiptImg').src = expReceiptData;
+    document.getElementById('expReceiptPreview').hidden = false;
+  }catch(err){
+    showToast('圖片處理失敗，換一張試試', true);
+  }
+});
+document.getElementById('expReceiptRemoveBtn').addEventListener('click', ()=>{
+  expReceiptData = '';
+  document.getElementById('expReceiptInput').value = '';
+  document.getElementById('expReceiptPreview').hidden = true;
+});
 
 // turns markdown-style [text](url) and bare URLs into clickable links, safely escaping everything else
 function linkifyNotes(text){

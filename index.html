@@ -163,8 +163,25 @@ body{
 .receipt-thumb{
   display:inline-block;width:34px;height:34px;flex:0 0 auto;
   border-radius:5px;overflow:hidden;border:1px solid var(--paper-line);
+  cursor:pointer;padding:0;background:none;
 }
 .receipt-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.activity-receipt{margin-top:8px;}
+.receipt-lightbox{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(20,18,16,.92);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.receipt-lightbox[hidden]{display:none;}
+.receipt-lightbox img{max-width:100%;max-height:90vh;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.4);}
+.receipt-lightbox-close{
+  position:absolute;top:18px;right:18px;
+  background:rgba(255,255,255,.12);border:none;color:#fff;
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.receipt-lightbox-close:hover{background:rgba(255,255,255,.22);}
 .act-checkbox-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--vermillion);}
 .act-paidby-row{display:flex;flex-direction:column;gap:6px;}
 .act-paidby-row[hidden]{display:none;}
@@ -1554,6 +1571,9 @@ function clearActModalFields(){
   document.getElementById('actSplitCost').checked = false;
   document.getElementById('actPaidBy').value = '';
   document.getElementById('actSeparatePaidBy').value = '';
+  actReceiptData = '';
+  document.getElementById('actReceiptInput').value = '';
+  document.getElementById('actReceiptPreview').hidden = true;
   setActWho('shared');
 }
 
@@ -1582,6 +1602,14 @@ function openActModal(mode, date, idx){
     document.getElementById('actCostJiyao').value = item.costJiyao || '';
     document.getElementById('actSeparateCurrency').value = item.currency || '¥';
     document.getElementById('actSeparatePaidBy').value = (item.costMode === 'separate') ? (item.paidBy || '') : '';
+    actReceiptData = item.receiptImage || '';
+    if(actReceiptData){
+      document.getElementById('actReceiptImg').src = actReceiptData;
+      document.getElementById('actReceiptPreview').hidden = false;
+    }else{
+      document.getElementById('actReceiptInput').value = '';
+      document.getElementById('actReceiptPreview').hidden = true;
+    }
     setActWho(item.who || 'shared');
     setActCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updatePaidByVisibility();
@@ -1655,7 +1683,8 @@ function saveActivityFromModal(){
     notes: document.getElementById('actNotes').value.trim(),
     timeStart: document.getElementById('actTimeStart').value,
     timeEnd: document.getElementById('actTimeEnd').value,
-    who: who
+    who: who,
+    receiptImage: actReceiptData
   }, costFields);
 
   if(actModalState.mode === 'edit'){
@@ -1761,6 +1790,9 @@ function clearExpModalFields(){
   document.getElementById('expSeparatePaidBy').value = '';
   document.getElementById('expPaymentMethod').value = '';
   document.getElementById('expNotes').value = '';
+  expReceiptData = '';
+  document.getElementById('expReceiptInput').value = '';
+  document.getElementById('expReceiptPreview').hidden = true;
   setExpWho('shared');
   setExpCostMode('single');
 }
@@ -1785,6 +1817,14 @@ function openExpModal(mode, idx){
     document.getElementById('expSeparatePaidBy').value = (item.costMode === 'separate') ? (item.paidBy || '') : '';
     document.getElementById('expPaymentMethod').value = item.paymentMethod || '';
     document.getElementById('expNotes').value = item.notes || '';
+    expReceiptData = item.receiptImage || '';
+    if(expReceiptData){
+      document.getElementById('expReceiptImg').src = expReceiptData;
+      document.getElementById('expReceiptPreview').hidden = false;
+    }else{
+      document.getElementById('expReceiptInput').value = '';
+      document.getElementById('expReceiptPreview').hidden = true;
+    }
     setExpWho(item.who || 'shared');
     setExpCostMode(item.costMode === 'separate' ? 'separate' : 'single');
     updateExpPaidByVisibility();
@@ -1850,7 +1890,8 @@ function saveExpenseFromModal(){
     who: who,
     date: document.getElementById('expDateSelect').value,
     paymentMethod: document.getElementById('expPaymentMethod').value,
-    notes: document.getElementById('expNotes').value.trim()
+    notes: document.getElementById('expNotes').value.trim(),
+    receiptImage: expReceiptData
   }, costFields);
 
   if(!state.expenses) state.expenses = [];
@@ -1987,10 +2028,12 @@ function renderActivities(date){
       ${formatTimeRange(a) ? `<div class="activity-time">${formatTimeRange(a)}</div>` : ''}
       ${metaHtml ? `<div class="activity-meta">${metaHtml}</div>` : ''}
       ${a.notes ? `<div class="activity-notes">${linkifyNotes(a.notes)}</div>` : ''}
+      ${a.receiptImage ? `<div class="activity-receipt">${receiptThumbHtml(a.receiptImage)}</div>` : ''}
     </div>
     </div>
   `;
   }).join('');
+  bindReceiptThumbs(el);
   el.querySelectorAll('.activity-del').forEach(b=>{
     b.addEventListener('click', ()=>{
       state.activities[date].splice(parseInt(b.dataset.i),1);
@@ -2052,9 +2095,11 @@ function renderStay(){
             ${r.mapUrl ? ` · <a href="${escapeHtml(r.mapUrl)}" target="_blank" rel="noopener">Google 地圖</a>` : ''}
           </div>
           ${r.notes ? `<div class="stay-notes">${linkifyNotes(r.notes)}</div>` : ''}
+          ${r.receiptImage ? `<div class="activity-receipt">${receiptThumbHtml(r.receiptImage)}</div>` : ''}
         </div>
       `;
     }).join('');
+    bindReceiptThumbs(list);
 
     list.querySelectorAll('.stay-edit').forEach(b=>{
       b.addEventListener('click', ()=>{
@@ -2429,6 +2474,28 @@ function escapeHtml(str){
 
 // resize + JPEG-compress an uploaded image client-side, returning a base64 data URL
 // (kept small so it can live directly inside the existing Firebase Realtime Database record)
+/* ---------------- receipt lightbox ---------------- */
+function receiptThumbHtml(receiptImage){
+  if(!receiptImage) return '';
+  return `<button type="button" class="receipt-thumb" data-receipt="${escapeHtml(receiptImage)}" aria-label="查看收據"><img src="${escapeHtml(receiptImage)}" alt="收據縮圖"></button>`;
+}
+function bindReceiptThumbs(container){
+  container.querySelectorAll('.receipt-thumb').forEach(btn=>{
+    btn.addEventListener('click', ()=>openReceiptLightbox(btn.dataset.receipt));
+  });
+}
+function openReceiptLightbox(src){
+  document.getElementById('receiptLightboxImg').src = src;
+  document.getElementById('receiptLightbox').removeAttribute('hidden');
+}
+function closeReceiptLightbox(){
+  document.getElementById('receiptLightbox').setAttribute('hidden','');
+}
+document.getElementById('receiptLightboxClose').addEventListener('click', closeReceiptLightbox);
+document.getElementById('receiptLightbox').addEventListener('click', e=>{
+  if(e.target.id === 'receiptLightbox') closeReceiptLightbox();
+});
+
 function compressImageToDataURL(file, maxDim, quality){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
@@ -2518,6 +2585,13 @@ function linkifyNotes(text){
 </script>
 
 <div id="syncToast" class="sync-toast"></div>
+
+<div id="receiptLightbox" class="receipt-lightbox" hidden>
+  <button type="button" id="receiptLightboxClose" class="receipt-lightbox-close" aria-label="關閉">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+  </button>
+  <img id="receiptLightboxImg" src="" alt="收據">
+</div>
 
 </body>
 </html>

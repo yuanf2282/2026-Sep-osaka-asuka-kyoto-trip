@@ -744,6 +744,13 @@ h2.section-title{
   </div>
 </div>
 
+<div id="receiptLightbox" class="receipt-lightbox" hidden>
+  <button type="button" id="receiptLightboxClose" class="receipt-lightbox-close" aria-label="關閉">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+  </button>
+  <img id="receiptLightboxImg" src="" alt="收據">
+</div>
+
 <div id="actModalOverlay" class="act-modal-overlay" hidden>
   <div class="act-modal-box">
     <div class="act-modal-header">
@@ -2585,13 +2592,6 @@ function linkifyNotes(text){
 </script>
 
 <div id="syncToast" class="sync-toast"></div>
-
-<div id="receiptLightbox" class="receipt-lightbox" hidden>
-  <button type="button" id="receiptLightboxClose" class="receipt-lightbox-close" aria-label="關閉">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-  </button>
-  <img id="receiptLightboxImg" src="" alt="收據">
-</div>
 
 </body>
 </html>

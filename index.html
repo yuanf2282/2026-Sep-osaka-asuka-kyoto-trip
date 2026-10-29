@@ -357,6 +357,7 @@ body{
   gap:12px;
   padding:14px 16px;
   border-left:6px solid var(--city-color);
+  cursor:pointer;
 }
 .day-date{font-family:var(--font-mono);font-weight:700;font-size:30px;}
 .day-weekday{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
@@ -376,7 +377,20 @@ body{
 }
 .day-add-btn:hover{background:var(--city-color);color:var(--paper-raised);}
 .day-add-btn.active{background:var(--city-color);color:var(--paper-raised);transform:rotate(45deg);}
+.day-toggle-btn{
+  flex:0 0 auto;
+  width:24px;height:24px;
+  border-radius:50%;
+  border:none;
+  background:none;
+  color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+}
+.day-toggle-btn svg{transition:transform .2s ease;}
+.day-card.open .day-toggle-btn svg{transform:rotate(180deg);}
 .day-body{padding:6px 16px 18px;}
+.day-body[hidden]{display:none;}
 
 .activity-card{
   padding:12px 14px;
@@ -827,6 +841,9 @@ h2.section-title{
         </select>
       </div>
 
+      <label class="act-field-label" for="actPaymentMethod">付款方式（選填）</label>
+      <input type="text" id="actPaymentMethod" placeholder="例如：現金、國泰信用卡">
+
       <div class="act-form-row act-time-row">
         <input type="time" class="act-time-start" id="actTimeStart">
         <span class="act-time-sep">~</span>
@@ -887,13 +904,8 @@ h2.section-title{
         </select>
       </div>
 
-      <label class="act-field-label" for="expPaymentMethod">付款方式</label>
-      <select id="expPaymentMethod">
-        <option value="">未指定</option>
-        <option value="現金">現金</option>
-        <option value="信用卡">信用卡</option>
-        <option value="其他">其他</option>
-      </select>
+      <label class="act-field-label" for="expPaymentMethod">付款方式（選填）</label>
+      <input type="text" id="expPaymentMethod" placeholder="例如：現金、國泰信用卡">
 
       <label class="act-field-label" for="expNotes">備註</label>
       <textarea class="act-notes" id="expNotes" placeholder="其他想記的小事"></textarea>
@@ -1324,15 +1336,28 @@ function showToast(msg, isError){
   toastTimer = setTimeout(()=>el.classList.remove('show'), 1800);
 }
 
+// Firebase 可能把「有缺漏的陣列」回傳成物件、或把空陣列直接吃掉(變成 undefined)。
+// 這裡統一轉回乾淨的陣列，避免後面 .map() 之類的操作出錯、導致畫面整個畫不出來。
+function toArray(v){
+  if(Array.isArray(v)) return v.filter(x => x !== null && x !== undefined);
+  if(v && typeof v === 'object'){
+    return Object.keys(v).sort((a,b)=>Number(a)-Number(b)).map(k=>v[k]).filter(x => x !== null && x !== undefined);
+  }
+  return [];
+}
+
 function initSync(){
   if(fbReady){
     fbDb.ref(TRIP_PATH).on('value', snap=>{
       const val = snap.val() || {};
-      state.activities = val.activities || {};
-      state.todos = val.todos || {yuan:[],jiyao:[],shared:[]};
+      const acts = val.activities || {};
+      state.activities = {};
+      Object.keys(acts).forEach(d=>{ state.activities[d] = toArray(acts[d]); });
+      const td = val.todos || {};
+      state.todos = { yuan: toArray(td.yuan), jiyao: toArray(td.jiyao), shared: toArray(td.shared) };
       state.notes = val.notes || {yuan:'',jiyao:'',shared:''};
-      state.repayments = val.repayments || [];
-      state.expenses = val.expenses || [];
+      state.repayments = toArray(val.repayments);
+      state.expenses = toArray(val.expenses);
       renderAll();
       updateSyncTime();
     }, err=>{
@@ -1357,10 +1382,36 @@ function persistLocal(){
 
 // write a specific sub-path (falls back to whole-state local save)
 function writePath(path, value){
+  const safeValue = JSON.parse(JSON.stringify(value === undefined ? null : value));
   if(fbReady){
-    fbDb.ref(TRIP_PATH + '/' + path).set(value)
-      .then(()=>{ showToast('已同步 ✓'); updateSyncTime(); })
-      .catch(()=>{ showToast('同步失敗，請檢查網路', true); });
+    try{
+      fbDb.ref(TRIP_PATH + '/' + path).set(safeValue)
+        .then(()=>{ showToast('已同步 ✓'); updateSyncTime(); })
+        .catch(()=>{ showToast('同步失敗，請檢查網路', true); });
+    }catch(e){
+      showToast('同步失敗，請檢查網路', true);
+      console.error('writePath failed', path, e);
+    }
+  }else{
+    persistLocal();
+    showToast('已存在本機（尚未連線 Firebase）');
+  }
+}
+
+// 一次原子性地寫入多個路徑（例如把行程從一天搬到另一天，兩邊要「同時」更新）。
+// 如果分開用兩次 writePath()，Firebase 有可能在兩次寫入中間送出一個「只改了一半」
+// 的快照給即時監聽器，畫面會暫時看起來像資料整個不見了。
+function writePaths(pathValueMap){
+  const safeMap = JSON.parse(JSON.stringify(pathValueMap, (k,v)=> v === undefined ? null : v));
+  if(fbReady){
+    try{
+      fbDb.ref(TRIP_PATH).update(safeMap)
+        .then(()=>{ showToast('已同步 ✓'); updateSyncTime(); })
+        .catch(()=>{ showToast('同步失敗，請檢查網路', true); });
+    }catch(e){
+      showToast('同步失敗，請檢查網路', true);
+      console.error('writePaths failed', pathValueMap, e);
+    }
   }else{
     persistLocal();
     showToast('已存在本機（尚未連線 Firebase）');
@@ -1450,6 +1501,7 @@ function renderDday(){
 /* ---------------- map -> itinerary jump ---------------- */
 function goToDay(date){
   document.querySelector('.tab[data-tab="itinerary"]').click();
+  openDay(date);
   const target = document.getElementById('day-' + date);
   if(!target) return;
   requestAnimationFrame(()=>{
@@ -1466,14 +1518,54 @@ document.querySelectorAll('.schema-stop').forEach(stop=>{
 });
 
 /* ---------------- itinerary ---------------- */
+// 哪些日期的行程卡目前是展開的；用一個 Set 記住，這樣即使因為 Firebase 同步
+// 而整個 #dayList 重畫，使用者展開/收合的狀態也不會被重置。
+// 預設全部收合，只自動展開「今天」那一張，省得每次都要往下滑一大段才找得到今天。
+let openDays = null;
+function todayDateStr(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function toggleDay(date){
+  const card = document.getElementById('day-' + date);
+  const body = document.querySelector('.day-body[data-date="'+date+'"]');
+  if(!card || !body) return;
+  if(openDays.has(date)){
+    openDays.delete(date);
+    body.setAttribute('hidden','');
+    card.classList.remove('open');
+  }else{
+    openDays.add(date);
+    body.removeAttribute('hidden');
+    card.classList.add('open');
+  }
+}
+function openDay(date){
+  if(!openDays) openDays = new Set();
+  openDays.add(date);
+  const card = document.getElementById('day-' + date);
+  const body = document.querySelector('.day-body[data-date="'+date+'"]');
+  if(body) body.removeAttribute('hidden');
+  if(card) card.classList.add('open');
+}
+
 function renderDays(){
   const list = document.getElementById('dayList');
   list.innerHTML = '';
+
+  if(openDays === null){
+    openDays = new Set();
+    const today = todayDateStr();
+    if(DAYS_DEF.some(d => d.date === today)) openDays.add(today);
+  }
+
   DAYS_DEF.forEach(day => {
     const d = new Date(day.date + 'T00:00:00');
     const cityInfo = CITY[day.city];
     const card = document.createElement('div');
-    card.className = 'day-card';
+    const isOpen = openDays.has(day.date);
+    card.className = 'day-card' + (isOpen ? ' open' : '');
     card.id = 'day-' + day.date;
 
     const cityLabel = day.from
@@ -1481,15 +1573,18 @@ function renderDays(){
       : cityInfo.name;
 
     card.innerHTML = `
-      <div class="day-head" style="--city-color:${cityInfo.color}">
+      <div class="day-head" data-date="${day.date}" style="--city-color:${cityInfo.color}">
         <div>
           <div class="day-date">${d.getMonth()+1}/${d.getDate()}</div>
           <div class="day-weekday">週${WD[d.getDay()]}</div>
         </div>
         <div class="day-city">${cityLabel}</div>
         <button class="day-add-btn" data-date="${day.date}" aria-label="新增行程" title="新增行程">+</button>
+        <button class="day-toggle-btn" data-date="${day.date}" aria-label="展開或收合">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
       </div>
-      <div class="day-body">
+      <div class="day-body" data-date="${day.date}" ${isOpen ? '' : 'hidden'}>
         <div class="act-list" data-date="${day.date}"></div>
       </div>
     `;
@@ -1499,7 +1594,20 @@ function renderDays(){
   DAYS_DEF.forEach(day => renderActivities(day.date));
 
   document.querySelectorAll('.day-add-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>openActModal('add', btn.dataset.date));
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openDay(btn.dataset.date);
+      openActModal('add', btn.dataset.date);
+    });
+  });
+  document.querySelectorAll('.day-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      toggleDay(btn.dataset.date);
+    });
+  });
+  document.querySelectorAll('.day-head').forEach(head=>{
+    head.addEventListener('click', ()=>toggleDay(head.dataset.date));
   });
 }
 
@@ -1575,6 +1683,7 @@ function clearActModalFields(){
   document.getElementById('actAddress').value = '';
   document.getElementById('actMapLink').value = '';
   document.getElementById('actNotes').value = '';
+  document.getElementById('actPaymentMethod').value = '';
   document.getElementById('actSplitCost').checked = false;
   document.getElementById('actPaidBy').value = '';
   document.getElementById('actSeparatePaidBy').value = '';
@@ -1603,6 +1712,7 @@ function openActModal(mode, date, idx){
     document.getElementById('actAddress').value = item.address || '';
     document.getElementById('actMapLink').value = item.mapUrl || '';
     document.getElementById('actNotes').value = item.notes || '';
+    document.getElementById('actPaymentMethod').value = item.paymentMethod || '';
     document.getElementById('actSplitCost').checked = !!item.splitCost;
     document.getElementById('actPaidBy').value = (item.costMode !== 'separate') ? (item.paidBy || '') : '';
     document.getElementById('actCostYuan').value = item.costYuan || '';
@@ -1691,7 +1801,8 @@ function saveActivityFromModal(){
     timeStart: document.getElementById('actTimeStart').value,
     timeEnd: document.getElementById('actTimeEnd').value,
     who: who,
-    receiptImage: actReceiptData
+    receiptImage: actReceiptData,
+    paymentMethod: document.getElementById('actPaymentMethod').value.trim()
   }, costFields);
 
   if(actModalState.mode === 'edit'){
@@ -1702,18 +1813,28 @@ function saveActivityFromModal(){
       renderActivities(origDate);
       writePath('activities/'+origDate, state.activities[origDate]);
     }else{
+      // 換日期：從原本那天移除、加到新的那天。兩個路徑一定要用 writePaths()
+      // 一次性原子寫入——如果分開呼叫兩次 writePath()，Firebase 有可能在兩次
+      // 寫入中間送出一個「只改了一半」的快照給即時監聽器（例如這筆行程暫時
+      // 同時出現在新舊兩天，或者畫面重畫時剛好用到中間那個不完整的狀態），
+      // 看起來就像行程卡「整個消失」了。原本那天如果已經沒有任何行程，直接
+      // 寫入 null 把那個節點整個清掉，避免留下一個空陣列造成混淆。
       state.activities[origDate].splice(idx, 1);
       if(!state.activities[newDate]) state.activities[newDate] = [];
       state.activities[newDate].push(entry);
       renderActivities(origDate);
       renderActivities(newDate);
-      writePath('activities/'+origDate, state.activities[origDate]);
-      writePath('activities/'+newDate, state.activities[newDate]);
+      openDay(newDate);
+      writePaths({
+        ['activities/'+newDate]: state.activities[newDate],
+        ['activities/'+origDate]: state.activities[origDate].length ? state.activities[origDate] : null
+      });
     }
   }else{
     if(!state.activities[newDate]) state.activities[newDate] = [];
     state.activities[newDate].push(entry);
     renderActivities(newDate);
+    openDay(newDate);
     writePath('activities/'+newDate, state.activities[newDate]);
   }
 
@@ -1925,7 +2046,7 @@ const CAT_COLOR = {'吃喝':'var(--vermillion)','景點':'var(--gold)','觀光':
 function normalizeActivity(item){
   // supports legacy plain-string activities from before this feature existed
   if(typeof item === 'string') return normalizeActivity({name:item});
-  const base = Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', paidBy:'', costMode:'single', costYuan:0, costJiyao:0, receiptImage:''}, item);
+  const base = Object.assign({name:'', category:'其他', address:'', mapUrl:'', cost:0, currency:'¥', notes:'', timeStart:'', timeEnd:'', who:'shared', paidBy:'', costMode:'single', costYuan:0, costJiyao:0, receiptImage:'', paymentMethod:''}, item);
   if(typeof base.splitCost !== 'boolean') base.splitCost = defaultSplitCost(base.category);
   resolveDualCurrency(base);
   return base;
@@ -2022,6 +2143,9 @@ function renderActivities(date){
           : `<span class="activity-split-note">兩人平分・尚未指定先付款人</span>`;
       }
     }
+    if(a.paymentMethod){
+      metaHtml += `<span class="activity-payment">💳 ${escapeHtml(a.paymentMethod)}</span>`;
+    }
     return `
     <div class="act-row owner-${a.who||'shared'}">
     <div class="activity-card" style="--cat-color:${CAT_COLOR[a.category]||'var(--ink-soft)'}">
@@ -2050,7 +2174,10 @@ function renderActivities(date){
     });
   });
   el.querySelectorAll('.activity-edit').forEach(b=>{
-    b.addEventListener('click', ()=>openActModal('edit', date, parseInt(b.dataset.i)));
+    b.addEventListener('click', ()=>{
+      openDay(date);
+      openActModal('edit', date, parseInt(b.dataset.i));
+    });
   });
 }
 

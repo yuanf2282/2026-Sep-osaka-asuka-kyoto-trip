@@ -282,6 +282,20 @@ body{
   padding:12px 8px 4px;
 }
 .schema-map{width:100%;height:auto;display:block;}
+.map-toggle-btn{
+  margin-top:22px;width:100%;
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px;
+  background:var(--paper-raised);color:var(--ink);
+  border:1px solid var(--paper-line);border-radius:8px;
+  font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;
+}
+.map-toggle-btn .chevron{margin-left:auto;color:var(--ink-soft);transition:transform .25s ease;}
+.map-toggle-btn.open .chevron{transform:rotate(180deg);}
+.map-toggle-btn.open{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.map-toggle-btn.open .chevron{color:var(--paper);}
+.map-wrap[hidden]{display:none;}
+.map-toggle-btn + .map-wrap{margin-top:8px;}
 .schema-land{fill:var(--paper);stroke:var(--paper-line);stroke-width:1.5;}
 .pref-shape{stroke-width:1.3;}
 .pref-osaka{fill:var(--gold);fill-opacity:.11;stroke:var(--gold);stroke-opacity:.5;}
@@ -989,7 +1003,11 @@ h2.section-title{
       <button id="identitySwitch" type="button">切換</button>
     </p>
 
-    <div class="map-wrap">
+    <button type="button" class="map-toggle-btn" id="mapToggle" aria-expanded="false">
+      <span>路線地圖</span>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+    </button>
+    <div class="map-wrap" id="mapWrap" hidden>
       <svg class="schema-map" viewBox="0 0 300 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="大阪、明日香、京都地理位置示意圖，含所屬縣市與周邊縣市（依實際經緯度比例繪製）">
 
         <!-- neighboring prefectures, context only -->
@@ -2628,6 +2646,22 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
     });
   });
 });
+
+/* ---------------- map toggle (預設收合，記住上次的選擇) ---------------- */
+(function(){
+  const btn = document.getElementById('mapToggle');
+  const wrap = document.getElementById('mapWrap');
+  function setMap(open){
+    wrap.hidden = !open;
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    try{ localStorage.setItem('trip-map-open', open ? '1' : '0'); }catch(e){}
+  }
+  btn.addEventListener('click', ()=> setMap(wrap.hidden));
+  let saved = null;
+  try{ saved = localStorage.getItem('trip-map-open'); }catch(e){}
+  if(saved === '1'){ wrap.hidden = false; btn.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+})();
 
 /* ---------------- flight info toggle ---------------- */
 const flightToggleBtn = document.getElementById('flightToggle');

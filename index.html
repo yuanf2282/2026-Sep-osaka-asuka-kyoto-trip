@@ -141,6 +141,13 @@ body{
   padding:11px 12px;border-radius:8px;cursor:pointer;
 }
 .quick-exp-btn:hover{border-color:var(--vermillion);color:var(--vermillion);}
+.export-xlsx-btn{
+  display:block;width:100%;margin:0 0 14px;
+  background:var(--paper-raised);border:1px solid var(--paper-line);
+  color:var(--ink);font-family:var(--font-body);font-weight:700;font-size:13px;
+  padding:10px 12px;border-radius:8px;cursor:pointer;
+}
+.export-xlsx-btn:hover{border-color:var(--moss);color:var(--moss);}
 .act-modal-body select.act-date-select{
   font-family:var(--font-body);font-size:14px;
   padding:9px 11px;border:1px solid var(--paper-line);border-radius:4px;
@@ -1178,6 +1185,8 @@ h2.section-title{
       <button class="filter-btn" data-stay-view="settle">分帳</button>
     </div>
 
+    <button class="export-xlsx-btn" id="exportXlsxBtn" type="button">匯出帳目成 Excel（.xlsx）</button>
+
     <div id="stayOverviewView">
       <button class="quick-exp-btn" id="quickExpBtn" type="button">+ 快速記一筆</button>
       <div id="stayList"></div>
@@ -1267,6 +1276,7 @@ h2.section-title{
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script>
@@ -2646,6 +2656,118 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
     });
   });
 });
+
+/* ---------------- export to Excel ---------------- */
+function exportExpensesToExcel(){
+  if(typeof XLSX === 'undefined'){
+    showToast('Excel 匯出元件載入失敗，請確認網路後重新整理再試', true);
+    return;
+  }
+  const modeLabel = n => n.costMode === 'separate' ? '各自金額' : ((n.who||'shared') === 'shared' ? '整體費用' : '個人費用');
+  const items = [];
+  DAYS_DEF.forEach(day=>{
+    (state.activities[day.date] || []).map(normalizeActivity).forEach(a=>{
+      items.push({n:a, date:day.date, src:'行程'});
+    });
+  });
+  (state.expenses || []).map(normalizeExpense).forEach(e=>{
+    items.push({n:e, date:e.date || '', src:'快速記帳'});
+  });
+  const hasMoney = n => n.costMode === 'separate'
+    ? (n.costYuanJPY + n.costYuanTWD + n.costJiyaoJPY + n.costJiyaoTWD) > 0
+    : (n.costJPY + n.costTWD) > 0;
+  const rows = items.filter(x => hasMoney(x.n)).sort((a,b)=>{
+    return (a.date||'').localeCompare(b.date||'') || (a.n.timeStart||'').localeCompare(b.n.timeStart||'');
+  });
+  if(rows.length === 0){ showToast('目前還沒有任何有填金額的項目可匯出', true); return; }
+
+  const header = ['日期','時間','來源','項目','類別','歸屬','金額模式',
+    '日圓 ¥','台幣 NT$','Yuan 日圓 ¥','Yuan 台幣 NT$','Jiyao 日圓 ¥','Jiyao 台幣 NT$',
+    '兩人平分','誰先付','付款方式','備註'];
+  const aoa = [header];
+  rows.forEach(({n,date,src})=>{
+    const sep = n.costMode === 'separate';
+    aoa.push([
+      date,
+      formatTimeRange(n),
+      src,
+      n.name,
+      n.category,
+      whoLabel(n.who),
+      modeLabel(n),
+      sep ? '' : (n.costJPY || ''),
+      sep ? '' : (n.costTWD || ''),
+      sep ? (n.costYuanJPY || '') : '',
+      sep ? (n.costYuanTWD || '') : '',
+      sep ? (n.costJiyaoJPY || '') : '',
+      sep ? (n.costJiyaoTWD || '') : '',
+      (!sep && n.who === 'shared' && n.splitCost) ? '是' : '',
+      n.paidBy ? whoLabel(n.paidBy) : '',
+      n.paymentMethod || '',
+      n.notes || ''
+    ]);
+  });
+  const last = aoa.length;            // 最後一列資料的列號（含表頭）
+  const sumRow = ['合計','','','','','','']; 
+  for(let c = 7; c <= 12; c++){
+    const col = XLSX.utils.encode_col(c);
+    sumRow.push({t:'n', f:`SUM(${col}2:${col}${last})`});
+  }
+  aoa.push(sumRow);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [12,12,9,22,8,8,10,11,11,12,12,12,12,8,8,16,28].map(w=>({wch:w}));
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+
+  // 分帳結算
+  const settle = getSettleEntries();
+  const sAoa = [['日期','項目','先付（債權人）','欠款者','欠款金額','幣別','說明']];
+  settle.forEach(r=>{
+    sAoa.push([
+      r.date || '', r.name, whoLabel(r.creditor), whoLabel(r.debtor), Math.round(r.amount*100)/100, r.currency || '¥',
+      r.costMode === 'separate' ? '各自金額・代墊對方自己的那份' : '平分・欠一半'
+    ]);
+  });
+  const net = {};
+  settle.forEach(r=>{
+    const cur = r.currency || '¥';
+    net[cur] = (net[cur]||0) + (r.creditor === 'yuan' ? r.amount : -r.amount);
+  });
+  (state.repayments || []).forEach(rp=>{
+    const cur = rp.currency || '¥';
+    net[cur] = (net[cur]||0) + (rp.direction === 'jiyao-to-yuan' ? -Number(rp.amount) : Number(rp.amount));
+  });
+  sAoa.push([]);
+  if((state.repayments||[]).length){
+    sAoa.push(['還款紀錄']);
+    sAoa.push(['方向','金額','幣別']);
+    state.repayments.forEach(rp=>sAoa.push([rp.direction === 'jiyao-to-yuan' ? 'Jiyao 還 Yuan' : 'Yuan 還 Jiyao', Number(rp.amount), rp.currency || '¥']));
+    sAoa.push([]);
+  }
+  sAoa.push(['目前淨額（已扣除還款）']);
+  Object.keys(net).forEach(cur=>{
+    const v = Math.round(net[cur]);
+    sAoa.push([cur, v === 0 ? '已結清' : (v > 0 ? 'Jiyao 還欠 Yuan' : 'Yuan 還欠 Jiyao'), Math.abs(v)]);
+  });
+  if(Object.keys(net).length === 0) sAoa.push(['目前沒有需要分帳的項目']);
+  const ws2 = XLSX.utils.aoa_to_sheet(sAoa);
+  ws2['!cols'] = [12,22,14,12,12,8,28].map(w=>({wch:w}));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '明細');
+  XLSX.utils.book_append_sheet(wb, ws2, '分帳結算');
+  const d = new Date();
+  const pad = x => String(x).padStart(2,'0');
+  const fname = '大阪京都明日香_帳目_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '.xlsx';
+  try{
+    XLSX.writeFile(wb, fname);
+    showToast('已匯出 ' + fname);
+  }catch(e){
+    console.error(e);
+    showToast('匯出失敗，請重試', true);
+  }
+}
+document.getElementById('exportXlsxBtn').addEventListener('click', exportExpensesToExcel);
 
 /* ---------------- map toggle (預設收合，記住上次的選擇) ---------------- */
 (function(){
